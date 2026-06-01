@@ -85,8 +85,6 @@ Two methods from unrelated fields with the *same* structure map to the same clas
 
 In spirit this is **active learning over a design space**: gaps play the role of coverage/uncertainty sampling, and each round acquires the evidence that most reduces an under-covered region.
 
-> **Honest note.** The map φ and the gap judgment are performed by LLM reasoning, not a closed-form operator; the engine's job is to maintain the structured, deduplicated state that makes the loop *closeable and reproducible*. There is no convergence theorem here — the monotone accumulation + dedup *is* the mechanism, not a proof of it.
-
 ## Highlights
 
 - 🧪 **Structure-indexed retrieval** — query by the shape of your problem, not keywords
@@ -254,10 +252,6 @@ kw kb add new-topic memory # register it for use from other projects
 - **Markdown is truth.** Indices are derived — delete and rebuild any time.
 - **Atomic writes.** Temp-file rename + `flock` on the index; no pid collisions, no torn writes.
 - **No silent fallback.** Validation errors raise; the engine never writes a placeholder record.
-
-## Honest scope
-
-kw-engine is a **tool and a method**, not a benchmarked research claim. It does not (yet) prove that structure-indexed retrieval beats RAG on a downstream task — that would need a controlled evaluation. What it *does* give you today is a disciplined, reproducible substrate for building and querying a transferable-methodology library, with the LLM reasoning cleanly separated from deterministic storage.
 
 ## Development
 
