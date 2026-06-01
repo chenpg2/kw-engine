@@ -8,7 +8,8 @@ from pydantic import BaseModel, field_validator
 
 PaperStatus = Literal["pending", "L1", "L2", "complete"]
 LinkType = Literal[
-    "generalizes", "specializes", "composes", "contrasts", "contradicts", "applies_to"
+    "generalizes", "specializes", "composes", "composed-by",
+    "contrasts", "contradicts", "applies_to",
 ]
 
 

@@ -113,7 +113,8 @@ def rebuild_index_db(
             )
         for prov in pr.provenance:
             parts = prov.split(None, 1)
-            paper_id = parts[0]
+            raw_id = parts[0]
+            paper_id = raw_id.split("[")[0] if "[" in raw_id else raw_id
             locator = parts[1] if len(parts) > 1 else ""
             conn.execute(
                 "INSERT INTO principle_provenance VALUES (?, ?, ?)",

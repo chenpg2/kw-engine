@@ -31,7 +31,8 @@ def run_checks(papers: list[PaperFull], principles: list[Principle]) -> list[Ver
     prov_ok = True
     for pr in principles:
         for prov in pr.provenance:
-            ref_id = prov.split()[0]
+            token = prov.split()[0]
+            ref_id = token.split("[")[0] if "[" in token else token
             if ref_id not in paper_ids:
                 prov_ok = False
                 verdicts.append(Verdict(

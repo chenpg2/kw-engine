@@ -8,7 +8,12 @@ from kw_engine.models import PaperFull, Principle
 
 
 def _paper_id_from_provenance(prov: str) -> str:
-    return prov.split()[0]
+    """Extract paper id from 'gkaf1205 §3.2' or 'ao-decomposition[Ao2003] §II'."""
+    token = prov.split()[0]
+    bracket = token.find("[")
+    if bracket != -1:
+        token = token[:bracket]
+    return token
 
 
 def build_index_json(
