@@ -11,8 +11,11 @@ SQLite is a derived index rebuilt by `kw reindex`; ops do not touch it directly.
 
 from __future__ import annotations
 
+import fcntl
 import json
 import tempfile
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +26,26 @@ import yaml
 # ---------------------------------------------------------------------------
 
 _RUBRIC_VERSION = "distill-rubric@v1"
+
+
+@contextmanager
+def _locked_index(memory_dir: Path) -> Generator[None, None, None]:
+    """Acquire an exclusive lock on index.json for atomic read-modify-write.
+
+    Prevents pid collision when multiple processes call add_principle,
+    add_paper, or add_link simultaneously.
+    """
+    lock_path = memory_dir / ".index.lock"
+    lock_path.touch(exist_ok=True)
+    fd = open(lock_path)  # noqa: WPS515 — intentional long-lived fd
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        fd.close()
+
+
 _EXTRACT_TEMPLATE_VERSION = "extract-template@v1"
 
 
@@ -153,47 +176,48 @@ def add_paper(
     Returns:
         Path to the paper markdown file.
     """
-    idx = _read_index(memory_dir)
+    with _locked_index(memory_dir):
+        idx = _read_index(memory_dir)
 
-    # Idempotency check
-    if any(p["id"] == paper_id for p in idx["papers"]):
-        return memory_dir / "papers" / f"{paper_id}.md"
+        # Idempotency check
+        if any(p["id"] == paper_id for p in idx["papers"]):
+            return memory_dir / "papers" / f"{paper_id}.md"
 
-    md_path = memory_dir / "papers" / f"{paper_id}.md"
+        md_path = memory_dir / "papers" / f"{paper_id}.md"
 
-    # Build minimal paper scaffold YAML frontmatter
-    fm: dict[str, Any] = {
-        "id": paper_id,
-        "doi": doi,
-        "bib": {
+        # Build minimal paper scaffold YAML frontmatter
+        fm: dict[str, Any] = {
+            "id": paper_id,
+            "doi": doi,
+            "bib": {
+                "title": title or "",
+                "authors": "",
+                "venue": "",
+                "year": None,
+            },
+            "problem_addressed": "",
+            "method_summary": "",
+            "math_used": "",
+            "claimed_mechanism": "",
+            "key_evidence": "",
+            "status": "pending",
+            "extract_template_version": _EXTRACT_TEMPLATE_VERSION,
+        }
+        body = "\n<!-- Fill in faithful notes below. No abstraction. -->\n"
+        content = _render_frontmatter(fm, body)
+
+        # Write markdown (inside the lock so idempotency is truly atomic)
+        _write_md_atomic(md_path, content)
+
+        # Update index
+        idx["papers"].append({
+            "id": paper_id,
+            "status": "pending",
+            "doi": doi,
             "title": title or "",
-            "authors": "",
-            "venue": "",
-            "year": None,
-        },
-        "problem_addressed": "",
-        "method_summary": "",
-        "math_used": "",
-        "claimed_mechanism": "",
-        "key_evidence": "",
-        "status": "pending",
-        "extract_template_version": _EXTRACT_TEMPLATE_VERSION,
-    }
-    body = "\n<!-- Fill in faithful notes below. No abstraction. -->\n"
-    content = _render_frontmatter(fm, body)
-
-    # Write markdown
-    _write_md_atomic(md_path, content)
-
-    # Update index
-    idx["papers"].append({
-        "id": paper_id,
-        "status": "pending",
-        "doi": doi,
-        "title": title or "",
-        "principles": [],
-    })
-    _write_index_atomic(memory_dir, idx)
+            "principles": [],
+        })
+        _write_index_atomic(memory_dir, idx)
 
     return md_path
 
@@ -235,49 +259,50 @@ def add_principle(
     if links is None:
         links = []
 
-    idx = _read_index(memory_dir)
+    with _locked_index(memory_dir):
+        idx = _read_index(memory_dir)
 
-    # Allocate next pid
-    current_counter: int = idx["counters"]["principle"]
-    new_counter = current_counter + 1
-    pid = f"P-{new_counter:04d}"
+        # Allocate next pid
+        current_counter: int = idx["counters"]["principle"]
+        new_counter = current_counter + 1
+        pid = f"P-{new_counter:04d}"
 
-    md_path = memory_dir / "principles" / f"{pid}.md"
+        md_path = memory_dir / "principles" / f"{pid}.md"
 
-    # Build YAML frontmatter
-    fm: dict[str, Any] = {
-        "id": pid,
-        "title": title,
-        "abstraction_level": abstraction_level,
-        "problem_signature": problem_signature,
-        "math_basis": math_basis,
-        "mechanism": mechanism,
-        "rationale": rationale,
-        "data_regime": data_regime,
-        "falsifiable_prediction": falsifiable_prediction,
-        "boundaries": boundaries,
-        "provenance": provenance,
-        "rubric_version": _RUBRIC_VERSION,
-        "links": links,
-    }
-    body = "\n<!-- Derivation, evidence quotes, transfer notes. -->\n"
-    content = _render_frontmatter(fm, body)
+        # Build YAML frontmatter
+        fm: dict[str, Any] = {
+            "id": pid,
+            "title": title,
+            "abstraction_level": abstraction_level,
+            "problem_signature": problem_signature,
+            "math_basis": math_basis,
+            "mechanism": mechanism,
+            "rationale": rationale,
+            "data_regime": data_regime,
+            "falsifiable_prediction": falsifiable_prediction,
+            "boundaries": boundaries,
+            "provenance": provenance,
+            "rubric_version": _RUBRIC_VERSION,
+            "links": links,
+        }
+        body = "\n<!-- Derivation, evidence quotes, transfer notes. -->\n"
+        content = _render_frontmatter(fm, body)
 
-    # Write markdown
-    _write_md_atomic(md_path, content)
+        # Write markdown (inside the lock so pid allocation + file write are atomic)
+        _write_md_atomic(md_path, content)
 
-    # Update index
-    idx["counters"]["principle"] = new_counter
-    idx["principles"].append({
-        "id": pid,
-        "title": title,
-        "problem_signature": problem_signature,
-        "math_basis": math_basis,
-        "provenance": provenance,
-        "rubric_version": _RUBRIC_VERSION,
-        "links": links,
-    })
-    _write_index_atomic(memory_dir, idx)
+        # Update index
+        idx["counters"]["principle"] = new_counter
+        idx["principles"].append({
+            "id": pid,
+            "title": title,
+            "problem_signature": problem_signature,
+            "math_basis": math_basis,
+            "provenance": provenance,
+            "rubric_version": _RUBRIC_VERSION,
+            "links": links,
+        })
+        _write_index_atomic(memory_dir, idx)
 
     return pid
 
@@ -312,17 +337,18 @@ def add_link(
         new_text = _insert_link_in_text(text, link_str)
         _write_md_atomic(md_path, new_text)
 
-    # --- Update index.json ---
-    idx = _read_index(memory_dir)
-    changed = False
-    for entry in idx["principles"]:
-        if entry["id"] == from_pid:
-            idx_links: list[str] = entry.get("links") or []
-            if link_str not in idx_links:
-                idx_links.append(link_str)
-                entry["links"] = idx_links
-                changed = True
-            break
+    # --- Update index.json (locked to prevent concurrent corruption) ---
+    with _locked_index(memory_dir):
+        idx = _read_index(memory_dir)
+        changed = False
+        for entry in idx["principles"]:
+            if entry["id"] == from_pid:
+                idx_links: list[str] = entry.get("links") or []
+                if link_str not in idx_links:
+                    idx_links.append(link_str)
+                    entry["links"] = idx_links
+                    changed = True
+                break
 
-    if changed:
-        _write_index_atomic(memory_dir, idx)
+        if changed:
+            _write_index_atomic(memory_dir, idx)

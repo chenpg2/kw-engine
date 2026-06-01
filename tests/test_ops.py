@@ -113,6 +113,45 @@ def test_add_principle_increments_counter(tmp_path):
     assert new_idx["counters"]["principle"] == 2
 
 
+def test_add_principle_creates_lock_file(tmp_path):
+    """Lock file is created during add_principle."""
+    import json
+
+    mem = tmp_path / "memory"
+    mem.mkdir()
+    (mem / "papers").mkdir()
+    (mem / "principles").mkdir()
+    idx = {
+        "version": 1,
+        "counters": {"principle": 0},
+        "papers": [
+            {"id": "p1", "status": "complete", "doi": None, "title": "P", "principles": []}
+        ],
+        "principles": [],
+        "synthesis": {"last_run": None, "n_principles_at_last_run": 0},
+    }
+    (mem / "index.json").write_text(json.dumps(idx))
+
+    from kw_engine.store.ops import add_principle
+
+    add_principle(
+        mem,
+        title="T",
+        abstraction_level="a",
+        problem_signature=["s"],
+        math_basis=["b"],
+        mechanism="m",
+        rationale="r",
+        data_regime=["d"],
+        falsifiable_prediction="f",
+        boundaries="b",
+        provenance=["p1 §1"],
+    )
+
+    # Lock file should exist after operation
+    assert (mem / ".index.lock").exists()
+
+
 def test_add_link(tmp_path):
     """add_link updates frontmatter and index."""
     mem = tmp_path / "memory"
