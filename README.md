@@ -112,11 +112,11 @@ cd kw-engine && uv sync
 
 ### Install as a Claude Code plugin
 
-Let Claude Code install it for you — paste these two slash commands into Claude Code:
+Run these in your terminal (not inside a Claude Code session):
 
-```text
-/plugin marketplace add chenpg2/kw-engine
-/plugin install kw-engine@kw-engine
+```bash
+claude plugins marketplace add chenpg2/kw-engine
+claude plugins install kw-engine@kw-engine
 ```
 
 This registers the `/kw` and `/kw-init` skills plus the five sub-agents. Then install the CLI substrate they call:

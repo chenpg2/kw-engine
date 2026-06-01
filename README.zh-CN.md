@@ -112,11 +112,11 @@ cd kw-engine && uv sync
 
 ### 作为 Claude Code 插件安装
 
-让 Claude Code 自己装——把这两条 slash 命令贴进 Claude Code：
+在终端运行（不是在 Claude Code 会话里）：
 
-```text
-/plugin marketplace add chenpg2/kw-engine
-/plugin install kw-engine@kw-engine
+```bash
+claude plugins marketplace add chenpg2/kw-engine
+claude plugins install kw-engine@kw-engine
 ```
 
 这会注册 `/kw` 和 `/kw-init` 两个 skill 以及五个子 agent。然后安装它们调用的 CLI 底座：
