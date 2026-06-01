@@ -24,43 +24,67 @@ _REGISTRY_PATH = Path.home() / ".kw" / "registry.yaml"
 def _load_registry() -> dict[str, str]:
     import yaml
 
-    if _REGISTRY_PATH.exists():
+    if not _REGISTRY_PATH.exists():
+        return {}
+    try:
         data = yaml.safe_load(_REGISTRY_PATH.read_text()) or {}
-        return data.get("knowledge_bases", {})
-    return {}
+    except yaml.YAMLError:
+        return {}
+    kbs = data.get("knowledge_bases", {})
+    if not isinstance(kbs, dict):
+        return {}
+    result: dict[str, str] = {str(k): str(v) for k, v in kbs.items()}
+    return result
 
 
 def _save_registry(kbs: dict[str, str]) -> None:
+    import tempfile
+
     import yaml
 
     _REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _REGISTRY_PATH.write_text(
-        yaml.dump({"knowledge_bases": kbs}, default_flow_style=False, sort_keys=True)
+    content = yaml.dump(
+        {"knowledge_bases": kbs}, default_flow_style=False, sort_keys=True
     )
+    with tempfile.NamedTemporaryFile(
+        mode="w", dir=_REGISTRY_PATH.parent, suffix=".yaml", delete=False
+    ) as tf:
+        tf.write(content)
+        tmp = Path(tf.name)
+    tmp.replace(_REGISTRY_PATH)
 
 
 def _resolve_memory_dir(memory_dir: Path | None) -> Path:
     if memory_dir:
         return memory_dir.resolve()
-    # Check .kw/config.yaml for a linked memory path (shared knowledge base)
+    # Walk up from cwd but stop at git root or .kw boundary (don't leak into parent projects)
     cwd = Path.cwd()
     for parent in [cwd, *cwd.parents]:
+        # Check .kw/config.yaml for a linked memory path
         config_path = parent / ".kw" / "config.yaml"
         if config_path.exists():
             import yaml
-            cfg = yaml.safe_load(config_path.read_text()) or {}
-            linked = cfg.get("paths", {}).get("memory")
-            if linked:
-                linked_path = Path(linked).expanduser().resolve()
-                if (linked_path / "SCHEMA.md").exists():
-                    return linked_path
-    # Fallback: walk up looking for memory/SCHEMA.md in the same repo
-    for parent in [cwd, *cwd.parents]:
+            try:
+                cfg = yaml.safe_load(config_path.read_text()) or {}
+            except yaml.YAMLError:
+                cfg = {}
+            paths = cfg.get("paths", {})
+            if isinstance(paths, dict):
+                linked = paths.get("memory")
+                if linked:
+                    linked_path = Path(str(linked)).expanduser().resolve()
+                    if (linked_path / "SCHEMA.md").exists():
+                        return linked_path
+        # Check for local memory/SCHEMA.md
         if (parent / "memory" / "SCHEMA.md").exists():
             return (parent / "memory").resolve()
-    typer.echo("ERROR: cannot find memory/ directory (no SCHEMA.md found)", err=True)
+        # Stop at git root — don't climb into parent projects
+        if (parent / ".git").exists():
+            break
+    typer.echo("ERROR: cannot find memory/ directory", err=True)
     typer.echo(
-        "Hint: run 'kw link <path>' to point to a shared knowledge base", err=True
+        "Hint: run 'kw link <name-or-path>' to connect to a knowledge base",
+        err=True,
     )
     raise typer.Exit(1)
 
