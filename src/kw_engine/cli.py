@@ -7,6 +7,7 @@ from pathlib import Path
 
 import typer
 
+from kw_engine.init import init_workspace
 from kw_engine.store.json_proj import build_index_json
 from kw_engine.store.markdown import scan_memory_dir
 from kw_engine.store.ops import add_link, add_paper, add_principle
@@ -107,6 +108,19 @@ def status(
             typer.echo(f"Synthesis: STALE ({delta} new principles since last run)")
         else:
             typer.echo(f"Synthesis: up to date (last run: {syn.get('last_run', 'never')})")
+
+
+@app.command("init")
+def cmd_init(
+    target: Path = typer.Argument(
+        ".", help="Target directory to initialize (default: current directory)"
+    ),
+) -> None:
+    """Scaffold a knowledge engine workspace (memory/, .kw/, process/, paper/)."""
+    target = target.resolve()
+    init_workspace(target)
+    typer.echo(f"Knowledge engine initialized at {target}")
+    typer.echo("Run 'kw status' to see the empty engine state.")
 
 
 @app.command("add-paper")
