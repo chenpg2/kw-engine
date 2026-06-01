@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="banner.png" alt="kw-engine banner" width="100%">
+
 # kw-engine
 
 **Stop re-reading papers. Start reusing the *why*.**

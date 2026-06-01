@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="banner.png" alt="kw-engine banner" width="100%">
+
 # kw-engine
 
 **别再重读论文。开始复用"为什么有效"。**
