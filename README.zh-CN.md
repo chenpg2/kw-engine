@@ -169,19 +169,75 @@ kw verify                                  # 校验溯源、链接、必填字�
 /kw-init     # 用自然语言初始化工作区
 ```
 
+## 多知识库管理
+
+你可以为不同研究主题维护独立的知识库，并在任何项目中按名称切换。
+
+```bash
+# 注册命名知识库（一次性操作，全局存储在 ~/.kw/registry.yaml）
+kw kb add microbiome   ~/research/microbiome-kb/memory
+kw kb add causal       ~/research/causal-inference-kb/memory
+kw kb add dynamics     ~/research/dynamics-kb/memory
+
+# 查看已注册的知识库
+kw kb list
+#   causal       /Users/you/research/causal-inference-kb/memory   [ok]
+#   dynamics     /Users/you/research/dynamics-kb/memory            [ok]
+#   microbiome   /Users/you/research/microbiome-kb/memory          [ok]
+```
+
+### 在任意项目中使用
+
+```bash
+# 在任何项目目录下，按名称链接到某个知识库
+cd ~/my-project
+kw link microbiome
+
+# 之后所有 kw 命令自动使用该知识库——不需要复制任何文件
+kw search "simplex dynamics"
+kw status
+kw verify
+
+# 切换到另一个知识库
+kw link causal
+kw search "intervention identifiability"
+```
+
+`kw link` 创建一个轻量的 `.kw/config.yaml` 指向共享库。不复制文件。多个项目可以同时共享同一个知识库。
+
+也可以直接按路径链接：
+```bash
+kw link ~/Downloads/soft/knowledge_wiki/memory
+```
+
+### 从零创建新知识库
+
+```bash
+mkdir ~/research/new-topic-kb && cd ~/research/new-topic-kb
+kw init                    # 创建 memory/、.kw/、process/、paper/
+kw kb add new-topic memory # 注册，以便其他项目使用
+```
+
 ## CLI 命令参考
 
 | 命令 | 用途 |
 |---|---|
-| `kw init [dir]` | 初始化工作区（`memory/`、`.kw/`、`process/`、`paper/`） |
+| **知识库管理** | |
+| `kw kb add <name> <path>` | 注册一个命名知识库 |
+| `kw kb list` | 列出所有已注册的知识库 |
+| `kw kb remove <name>` | 取消注册（不删除文件） |
+| `kw link <name-or-path>` | 将当前项目链接到某个知识库 |
+| **工作区** | |
+| `kw init [dir]` | 从零初始化一个新工作区 |
+| `kw status` | 计数、待处理论文、综合是否过期 |
+| `kw reindex` | 从 markdown 重建 `index.json` + SQLite |
+| `kw verify` | 校验完整性不变量（溯源、链接、必填字段） |
+| **论文与原则** | |
 | `kw fetch <id\|doi\|title>` | 通过 OA 回退链获取 PDF + 校验 + 登记 |
 | `kw add-paper <id>` | 登记一篇论文（创建记录 + 索引条目） |
 | `kw add-principle …` | 分配 `P-####`，写入原则，更新 index + SQLite |
 | `kw add-link <from> <to> <type>` | 建立原则间的链接（`generalizes`/`contrasts`/`composes`/…） |
 | `kw search "<query>"` | 按 problem-signature / math-basis 检索原则 |
-| `kw reindex` | 从 markdown 重建 `index.json` + SQLite |
-| `kw verify` | 校验完整性不变量（溯源、链接、必填字段） |
-| `kw status` | 计数、待处理论文、综合是否过期 |
 
 ## 架构
 

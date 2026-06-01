@@ -169,19 +169,75 @@ Installed as a plugin, just run the skill — it orchestrates fetch → read →
 /kw-init     # scaffold a workspace from natural language
 ```
 
+## Multiple knowledge bases
+
+You can maintain separate knowledge bases for different research topics and switch between them from any project.
+
+```bash
+# Register named knowledge bases (once, stored globally in ~/.kw/registry.yaml)
+kw kb add microbiome   ~/research/microbiome-kb/memory
+kw kb add causal       ~/research/causal-inference-kb/memory
+kw kb add dynamics     ~/research/dynamics-kb/memory
+
+# See what's registered
+kw kb list
+#   causal       /Users/you/research/causal-inference-kb/memory   [ok]
+#   dynamics     /Users/you/research/dynamics-kb/memory            [ok]
+#   microbiome   /Users/you/research/microbiome-kb/memory          [ok]
+```
+
+### Use from any project
+
+```bash
+# In any project directory, link to a knowledge base by name
+cd ~/my-project
+kw link microbiome
+
+# Now all kw commands use the microbiome knowledge base — no local copy needed
+kw search "simplex dynamics"
+kw status
+kw verify
+
+# Switch to a different knowledge base
+kw link causal
+kw search "intervention identifiability"
+```
+
+`kw link` creates a lightweight `.kw/config.yaml` that points to the shared library. No files are copied. Multiple projects can share the same knowledge base simultaneously.
+
+You can also link by path instead of name:
+```bash
+kw link ~/Downloads/soft/knowledge_wiki/memory
+```
+
+### Create a new knowledge base from scratch
+
+```bash
+mkdir ~/research/new-topic-kb && cd ~/research/new-topic-kb
+kw init                    # scaffolds memory/, .kw/, process/, paper/
+kw kb add new-topic memory # register it for use from other projects
+```
+
 ## CLI reference
 
 | Command | Purpose |
 |---|---|
-| `kw init [dir]` | Scaffold a workspace (`memory/`, `.kw/`, `process/`, `paper/`) |
+| **Knowledge bases** | |
+| `kw kb add <name> <path>` | Register a named knowledge base |
+| `kw kb list` | Show all registered knowledge bases |
+| `kw kb remove <name>` | Unregister a knowledge base (files untouched) |
+| `kw link <name-or-path>` | Link current project to a knowledge base |
+| **Workspace** | |
+| `kw init [dir]` | Scaffold a new workspace from scratch |
+| `kw status` | Counts, pending papers, synthesis staleness |
+| `kw reindex` | Rebuild `index.json` + SQLite from markdown |
+| `kw verify` | Check integrity invariants (provenance, links, required fields) |
+| **Papers & principles** | |
 | `kw fetch <id\|doi\|title>` | Acquire a PDF via OA fallback chain + validate + register |
 | `kw add-paper <id>` | Register a paper (scaffold record + index entry) |
 | `kw add-principle …` | Allocate `P-####`, write the principle, update index + SQLite |
 | `kw add-link <from> <to> <type>` | Link principles (`generalizes`/`contrasts`/`composes`/…) |
 | `kw search "<query>"` | Retrieve principles by problem-signature / math-basis |
-| `kw reindex` | Rebuild `index.json` + SQLite from markdown |
-| `kw verify` | Check integrity invariants (provenance, links, required fields) |
-| `kw status` | Counts, pending papers, synthesis staleness |
 
 ## Architecture
 
