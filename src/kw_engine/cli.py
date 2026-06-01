@@ -161,6 +161,23 @@ def cmd_add_principle(
     typer.echo(f"OK: {pid}")
 
 
+@app.command()
+def search(
+    query: str = typer.Argument(help="Search query (keywords from problem signatures or math basis)"),  # noqa: E501
+    top_k: int = typer.Option(10, "-n", help="Max results"),
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Search principles by problem_signature and math_basis keywords."""
+    from kw_engine.store.search import search_principles
+    mem = _resolve_memory_dir(memory_dir)
+    results = search_principles(mem, query, top_k=top_k)
+    if not results:
+        typer.echo("No matching principles found.")
+        raise typer.Exit(0)
+    for r in results:
+        typer.echo(f"  {r['id']} (score={r['score']}) {r['title']}")
+
+
 @app.command("add-link")
 def cmd_add_link(
     from_pid: str = typer.Argument(help="Source principle id (e.g. P-0001)"),
