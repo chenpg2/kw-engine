@@ -15,6 +15,5 @@
     "literature",
     "claude-code"
   ],
-  "skills": "./skills/",
-  "agents": "./agents/"
+  "skills": "./skills/"
 }
