@@ -4,16 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from kw_engine.models import PaperFull, Principle
-
-
-def _paper_id_from_provenance(prov: str) -> str:
-    """Extract paper id from 'gkaf1205 §3.2' or 'ao-decomposition[Ao2003] §II'."""
-    token = prov.split()[0]
-    bracket = token.find("[")
-    if bracket != -1:
-        token = token[:bracket]
-    return token
+from kw_engine.models import PaperFull, Principle, paper_id_from_provenance
 
 
 def build_index_json(
@@ -25,7 +16,7 @@ def build_index_json(
     paper_to_principles: dict[str, list[str]] = {p.id: [] for p in papers}
     for pr in principles:
         for prov in pr.provenance:
-            pid = _paper_id_from_provenance(prov)
+            pid = paper_id_from_provenance(prov)
             if pid in paper_to_principles:
                 if pr.id not in paper_to_principles[pid]:
                     paper_to_principles[pid].append(pr.id)

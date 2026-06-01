@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from kw_engine.models import LinkEntry, PaperFull, Principle
+from kw_engine.models import LinkEntry, PaperFull, Principle, paper_id_from_provenance
 
 
 @dataclass
@@ -31,8 +31,7 @@ def run_checks(papers: list[PaperFull], principles: list[Principle]) -> list[Ver
     prov_ok = True
     for pr in principles:
         for prov in pr.provenance:
-            token = prov.split()[0]
-            ref_id = token.split("[")[0] if "[" in token else token
+            ref_id = paper_id_from_provenance(prov)
             if ref_id not in paper_ids:
                 prov_ok = False
                 verdicts.append(Verdict(

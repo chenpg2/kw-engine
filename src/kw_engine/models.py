@@ -6,11 +6,18 @@ from typing import Literal
 
 from pydantic import BaseModel, field_validator
 
-PaperStatus = Literal["pending", "L1", "L2", "complete"]
+PaperStatus = Literal["pending", "L1", "L2", "complete", "incomplete"]
 LinkType = Literal[
     "generalizes", "specializes", "composes", "composed-by",
     "contrasts", "contradicts", "applies_to",
 ]
+
+
+def paper_id_from_provenance(prov: str) -> str:
+    """Extract paper id from provenance like 'gkaf1205 §3.2' or 'ao-decomposition[Ao2003] ��II'."""
+    token = prov.split()[0]
+    bracket = token.find("[")
+    return token[:bracket] if bracket != -1 else token
 
 
 class Bib(BaseModel):

@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from kw_engine.models import LinkEntry, PaperFull, Principle
+from kw_engine.models import LinkEntry, PaperFull, Principle, paper_id_from_provenance
 
 
 _SCHEMA_SQL = """
@@ -113,8 +113,7 @@ def rebuild_index_db(
             )
         for prov in pr.provenance:
             parts = prov.split(None, 1)
-            raw_id = parts[0]
-            paper_id = raw_id.split("[")[0] if "[" in raw_id else raw_id
+            paper_id = paper_id_from_provenance(prov)
             locator = parts[1] if len(parts) > 1 else ""
             conn.execute(
                 "INSERT INTO principle_provenance VALUES (?, ?, ?)",
