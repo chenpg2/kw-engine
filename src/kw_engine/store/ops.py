@@ -86,6 +86,47 @@ def _render_frontmatter(fm: dict[str, Any], body: str) -> str:
     return f"---\n{fm_str}---\n{body}"
 
 
+def _insert_link_in_text(text: str, link_str: str) -> str:
+    """Insert a link entry into the raw markdown text without re-serializing YAML.
+
+    Handles two cases:
+    - `links: []` → replace with `links:\n  - "link_str"`
+    - `links:\n  - "existing"` → append `  - "link_str"` after the last link entry
+    """
+    import re
+
+    # Case 1: links: [] (empty inline list)
+    empty_pattern = r"(links:\s*)\[\]"
+    if re.search(empty_pattern, text):
+        return re.sub(empty_pattern, f'\\1\n  - "{link_str}"', text)
+
+    # Case 2: links already has items — find the last `  - "..."` after `links:`
+    lines = text.split("\n")
+    last_link_idx = -1
+    in_links = False
+    for i, line in enumerate(lines):
+        if line.startswith("links:"):
+            in_links = True
+            continue
+        if in_links:
+            if line.startswith("  - "):
+                last_link_idx = i
+            elif line and not line.startswith(" "):
+                break
+
+    if last_link_idx >= 0:
+        lines.insert(last_link_idx + 1, f'  - "{link_str}"')
+        return "\n".join(lines)
+
+    # Fallback: append before closing ---
+    parts = text.split("---", 2)
+    if len(parts) >= 3:
+        parts[1] = parts[1].rstrip() + f'\nlinks:\n  - "{link_str}"\n'
+        return "---".join(parts)
+
+    return text
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -260,16 +301,15 @@ def add_link(
     """
     link_str = f"{link_type}:{to_pid}"
 
-    # --- Update markdown frontmatter ---
+    # --- Update markdown frontmatter (targeted edit, preserves formatting) ---
     md_path = memory_dir / "principles" / f"{from_pid}.md"
     text = md_path.read_text(encoding="utf-8")
-    fm, body = _parse_frontmatter(text)
+    fm, _body = _parse_frontmatter(text)
 
     existing_links: list[str] = fm.get("links") or []
     if link_str not in existing_links:
-        existing_links.append(link_str)
-        fm["links"] = existing_links
-        new_text = _render_frontmatter(fm, body)
+        # Insert the new link into the raw text to preserve block scalar styles
+        new_text = _insert_link_in_text(text, link_str)
         _write_md_atomic(md_path, new_text)
 
     # --- Update index.json ---
