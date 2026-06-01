@@ -1,17 +1,32 @@
 # kw-engine
 
-Deterministic substrate for a knowledge engine — ingest academic papers into a reusable, domain-stripped principle library.
+Methodology evolution engine — distill transferable problem-solving principles from literature, search by problem structure, get grounded mechanism + rationale.
 
-## What it does
+## Why
 
-Papers flow through three layers:
-- **L1 (faithful):** structured extraction with section locators
-- **L2 (abstract):** transferable first-principles (problem-signature ↔ mechanism ↔ rationale)
-- **L3 (synthesis):** cross-paper design-space map, contradictions, and gaps
+When you face a new problem, the question is not "which papers are relevant" but **"what mathematical mechanism attacks this problem's structure, and why does it work?"** kw-engine answers this by continuously distilling literature into a library of domain-stripped principles — each encoding: *when* it applies (problem signature), *what* to do (mechanism + math basis), and *why* it works (first-principles rationale).
 
-The engine separates concerns:
-- **Reasoning** (read/distill/synthesize) stays in LLM agents
-- **Substrate** (this package) provides deterministic, atomic CLI commands for mutations and queries
+## How it works
+
+Literature flows through three distillation layers:
+
+- **L1 (faithful extraction):** what the paper says, with section locators — no interpretation
+- **L2 (abstraction):** strip the domain, keep the transferable logic — problem-signature ↔ mechanism ↔ rationale
+- **L3 (synthesis):** cross-paper design-space map, contradictions, gaps — where the knowledge *evolves*
+
+The cycle:
+```
+Read papers → Distill principles → Synthesize design space → Identify gaps → Read more papers
+                                                                    ↑
+New problem arrives → Search by structure → Match mechanism → Apply (or discover gap)
+```
+
+This is not RAG (retrieve chunks) or a citation manager (organize references). It's a **methodology compiler** — empirical results in, reusable problem-solving strategies out.
+
+## Separation of concerns
+
+- **Reasoning** (read/distill/synthesize) — irreducibly LLM, stays in agents
+- **Substrate** (this package) — deterministic, atomic CLI commands for mutations and queries
 
 ## Installation
 

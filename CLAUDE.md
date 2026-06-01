@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-kw-engine: deterministic substrate for the knowledge engine.
+kw-engine: methodology evolution engine substrate. Distill → abstract → synthesize → search by problem structure.
 
 ## Commands
 

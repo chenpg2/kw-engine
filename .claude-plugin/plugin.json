@@ -1,7 +1,7 @@
 {
   "name": "kw-engine",
   "version": "0.3.0",
-  "description": "Knowledge engine — ingest papers into a reusable principle library (L1→L2→L3)",
+  "description": "Methodology evolution engine — distill transferable principles from literature, search by problem structure",
   "author": {
     "name": "peigenchan"
   },
