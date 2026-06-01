@@ -19,4 +19,4 @@ uv run mypy src/                       # type check
 - Paper id = PDF filename stem
 - Principle id = P-#### (zero-padded)
 - All models in models.py; store/ never imports from cli.py
-- No silent fallback: validation errors raise, never coerce
+- No silent fallback: validation errors raise, never coerce.
