@@ -156,6 +156,9 @@ kw search "optimal transport dynamics"
 
 # 5. 保持诚实
 kw verify                                  # 校验溯源、链接、必填字段
+
+# 可选：用终端 UI 浏览和维护知识库
+kw ui
 ```
 
 ### 或者让 Claude Code 来驱动
@@ -228,6 +231,7 @@ kw kb add new-topic memory # 注册，以便其他项目使用
 | **工作区** | |
 | `kw init [dir]` | 从零初始化一个新工作区 |
 | `kw status` | 计数、待处理论文、综合是否过期 |
+| `kw ui` | 打开终端 UI，用于浏览、搜索、校验和重建索引 |
 | `kw reindex` | 从 markdown 重建 `index.json` + SQLite |
 | `kw verify` | 校验完整性不变量（溯源、链接、必填字段） |
 | **论文与原则** | |

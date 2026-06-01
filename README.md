@@ -156,6 +156,9 @@ kw search "optimal transport dynamics"
 
 # 5. Keep it honest
 kw verify                                  # checks provenance, links, required fields
+
+# Optional: browse and maintain the library in a terminal UI
+kw ui
 ```
 
 ### Or let Claude Code drive it
@@ -228,6 +231,7 @@ kw kb add new-topic memory # register it for use from other projects
 | **Workspace** | |
 | `kw init [dir]` | Scaffold a new workspace from scratch |
 | `kw status` | Counts, pending papers, synthesis staleness |
+| `kw ui` | Open a terminal UI for browsing, searching, verifying, and reindexing |
 | `kw reindex` | Rebuild `index.json` + SQLite from markdown |
 | `kw verify` | Check integrity invariants (provenance, links, required fields) |
 | **Papers & principles** | |

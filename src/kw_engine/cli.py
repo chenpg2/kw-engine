@@ -259,6 +259,17 @@ def status(
             typer.echo(f"Synthesis: up to date (last run: {syn.get('last_run', 'never')})")
 
 
+@app.command()
+def ui(
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Open the terminal UI for browsing and maintaining a knowledge base."""
+    from kw_engine.ui import run_ui
+
+    mem = _resolve_memory_dir(memory_dir)
+    run_ui(mem)
+
+
 @app.command("init")
 def cmd_init(
     target: Path = typer.Argument(
