@@ -1,0 +1,18 @@
+{
+  "name": "kw-engine",
+  "version": "0.3.0",
+  "description": "Knowledge engine — ingest papers into a reusable principle library (L1→L2→L3)",
+  "author": {
+    "name": "peigenchan"
+  },
+  "license": "MIT",
+  "keywords": [
+    "knowledge-engine",
+    "papers",
+    "principles",
+    "research",
+    "claude-code"
+  ],
+  "skills": "../plugin/skills/",
+  "agents": "../plugin/agents/"
+}
