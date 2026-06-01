@@ -9,6 +9,7 @@ import typer
 
 from kw_engine.store.json_proj import build_index_json
 from kw_engine.store.markdown import scan_memory_dir
+from kw_engine.store.ops import add_link, add_paper, add_principle
 from kw_engine.store.sqlite import rebuild_index_db
 from kw_engine.verify import run_checks
 
@@ -106,6 +107,76 @@ def status(
             typer.echo(f"Synthesis: STALE ({delta} new principles since last run)")
         else:
             typer.echo(f"Synthesis: up to date (last run: {syn.get('last_run', 'never')})")
+
+
+@app.command("add-paper")
+def cmd_add_paper(
+    paper_id: str = typer.Argument(help="Paper id (PDF filename stem)"),
+    doi: str = typer.Option(None, help="DOI if known"),
+    title: str = typer.Option(None, help="Paper title if known"),
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Register a new paper (creates scaffold md + index entry)."""
+    mem = _resolve_memory_dir(memory_dir)
+    result = add_paper(mem, paper_id, doi=doi, title=title)
+    if result is None:
+        typer.echo(f"SKIP: {paper_id} already exists")
+    else:
+        typer.echo(f"OK: {result}")
+
+
+@app.command("add-principle")
+def cmd_add_principle(
+    title: str = typer.Option(..., help="One-line principle title"),
+    abstraction_level: str = typer.Option(..., "--abstract", help="Domain-stripped statement"),
+    problem_signature: list[str] = typer.Option(..., "--sig", help="Problem signature items"),
+    math_basis: list[str] = typer.Option(..., "--math", help="Math basis tags"),
+    mechanism: str = typer.Option(..., help="How math attacks the structure"),
+    rationale: str = typer.Option(..., help="Why structure<->mechanism connects"),
+    data_regime: list[str] = typer.Option(..., "--regime", help="Required data conditions"),
+    falsifiable_prediction: str = typer.Option(..., "--prediction", help="Testable prediction"),
+    boundaries: str = typer.Option(..., help="When it breaks / assumptions"),
+    provenance: list[str] = typer.Option(
+        ..., "--prov", help="Paper citations (e.g. 'gkaf1205 §3')"
+    ),
+    links: list[str] = typer.Option([], "--link", help="Links (e.g. 'contrasts:P-0001')"),
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Allocate a new principle (P-####), create md, update index."""
+    mem = _resolve_memory_dir(memory_dir)
+    pid = add_principle(
+        mem,
+        title=title,
+        abstraction_level=abstraction_level,
+        problem_signature=problem_signature,
+        math_basis=math_basis,
+        mechanism=mechanism,
+        rationale=rationale,
+        data_regime=data_regime,
+        falsifiable_prediction=falsifiable_prediction,
+        boundaries=boundaries,
+        provenance=provenance,
+        links=links if links else None,
+    )
+    typer.echo(f"OK: {pid}")
+
+
+@app.command("add-link")
+def cmd_add_link(
+    from_pid: str = typer.Argument(help="Source principle id (e.g. P-0001)"),
+    to_pid: str = typer.Argument(help="Target principle id (e.g. P-0002)"),
+    link_type: str = typer.Argument(
+        help=(
+            "Link type: generalizes|specializes|composes|contrasts"
+            "|contradicts|applies_to|composed-by"
+        )
+    ),
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Add a link between two principles."""
+    mem = _resolve_memory_dir(memory_dir)
+    add_link(mem, from_pid, to_pid, link_type)
+    typer.echo(f"OK: {from_pid} --{link_type}--> {to_pid}")
 
 
 if __name__ == "__main__":
