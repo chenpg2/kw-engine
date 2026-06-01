@@ -178,6 +178,29 @@ def search(
         typer.echo(f"  {r['id']} (score={r['score']}) {r['title']}")
 
 
+@app.command()
+def fetch(
+    paper_id: str = typer.Argument(help="Paper id, DOI, or arXiv id"),
+    doi: str = typer.Option(None, help="DOI if known"),
+    title: str = typer.Option(None, help="Paper title if known"),
+    papers_dir: Path = typer.Option(None, help="Directory for PDFs (default: ../paper/)"),
+    paper_search_dir: str = typer.Option(None, "--paper-search", help="Path to paper-search repo"),
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Fetch a paper PDF and register it."""
+    from kw_engine.fetch import fetch_paper
+    mem = _resolve_memory_dir(memory_dir)
+    result = fetch_paper(
+        mem, paper_id,
+        papers_dir=papers_dir.resolve() if papers_dir else None,
+        doi=doi, title=title,
+        paper_search_dir=paper_search_dir,
+    )
+    typer.echo(result)
+    if result.startswith("FAIL"):
+        raise typer.Exit(1)
+
+
 @app.command("add-link")
 def cmd_add_link(
     from_pid: str = typer.Argument(help="Source principle id (e.g. P-0001)"),
