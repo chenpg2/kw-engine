@@ -1,11 +1,27 @@
 ---
 name: kw-init
-description: Scaffold a new knowledge engine workspace in the current project. Creates .kw/config.yaml, memory/ with SCHEMA.md, and process/ templates. Use when starting a new knowledge base in any repo.
+description: Scaffold a new knowledge engine workspace OR link to an existing shared knowledge base. Use when starting a new knowledge base or connecting a project to an existing one.
 ---
 
-# /kw-init — scaffold a knowledge engine workspace
+# /kw-init — scaffold or link a knowledge engine workspace
 
-Run this once in any repo to set up the knowledge engine file structure.
+**Two modes:**
+
+## Mode 1: Link to an existing knowledge base (most common)
+
+If a shared knowledge base already exists (e.g. `~/Downloads/soft/knowledge_wiki/memory/`),
+link this project to it instead of creating a new one:
+
+```bash
+kw link ~/Downloads/soft/knowledge_wiki/memory/
+```
+
+This creates `.kw/config.yaml` with `paths.memory` pointing to the shared library.
+All `kw` commands (`search`, `verify`, `status`, etc.) now use the shared knowledge.
+
+## Mode 2: Create a new knowledge base from scratch
+
+Run this once in any repo to set up a fresh, empty knowledge engine.
 
 ## What it creates
 

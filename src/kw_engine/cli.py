@@ -20,12 +20,63 @@ app = typer.Typer(no_args_is_help=True)
 def _resolve_memory_dir(memory_dir: Path | None) -> Path:
     if memory_dir:
         return memory_dir.resolve()
+    # Check .kw/config.yaml for a linked memory path (shared knowledge base)
     cwd = Path.cwd()
+    for parent in [cwd, *cwd.parents]:
+        config_path = parent / ".kw" / "config.yaml"
+        if config_path.exists():
+            import yaml
+            cfg = yaml.safe_load(config_path.read_text()) or {}
+            linked = cfg.get("paths", {}).get("memory")
+            if linked:
+                linked_path = Path(linked).expanduser().resolve()
+                if (linked_path / "SCHEMA.md").exists():
+                    return linked_path
+    # Fallback: walk up looking for memory/SCHEMA.md in the same repo
     for parent in [cwd, *cwd.parents]:
         if (parent / "memory" / "SCHEMA.md").exists():
             return (parent / "memory").resolve()
     typer.echo("ERROR: cannot find memory/ directory (no SCHEMA.md found)", err=True)
+    typer.echo(
+        "Hint: run 'kw link <path>' to point to a shared knowledge base", err=True
+    )
     raise typer.Exit(1)
+
+
+@app.command()
+def link(
+    memory_path: str = typer.Argument(
+        help="Path to a shared memory/ directory (e.g. ~/knowledge_wiki/memory)"
+    ),
+    target: Path = typer.Argument(
+        ".", help="Project directory to link (default: current directory)"
+    ),
+) -> None:
+    """Link a project to a shared knowledge base (no local copy)."""
+    import yaml
+
+    resolved = Path(memory_path).expanduser().resolve()
+    if not (resolved / "SCHEMA.md").exists():
+        typer.echo(f"ERROR: {resolved} does not contain SCHEMA.md", err=True)
+        raise typer.Exit(1)
+
+    target = target.resolve()
+    kw_dir = target / ".kw"
+    kw_dir.mkdir(parents=True, exist_ok=True)
+    config_path = kw_dir / "config.yaml"
+
+    if config_path.exists():
+        cfg = yaml.safe_load(config_path.read_text()) or {}
+    else:
+        cfg = {"version": 1}
+
+    if "paths" not in cfg:
+        cfg["paths"] = {}
+    cfg["paths"]["memory"] = str(resolved)
+
+    config_path.write_text(yaml.dump(cfg, default_flow_style=False, sort_keys=False))
+    typer.echo(f"Linked: {target} → {resolved}")
+    typer.echo("All kw commands in this project now use the shared knowledge base.")
 
 
 @app.command()
