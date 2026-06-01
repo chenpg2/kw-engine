@@ -59,6 +59,32 @@ kw-engine 把这件事本身当作要解决的问题。
 
 它不是文本上的检索索引——它是一个从*经验结果*到*可复用解题策略*的编译器。
 
+## 为什么它能自进化
+
+三个要素让这个循环能自己挑下一步，而不是等人来决定读什么。
+
+**1 · 蒸馏是一个商映射（quotient map）。** L2 抽象剥离领域——它把一个具体方法 `m` 映射到 *"同一问题结构、同一机制"* 下的等价类：
+
+```
+φ :  具体方法  ──►  ( problem_signature , math_basis , mechanism , rationale )
+```
+
+两个来自无关领域、但结构*相同*的方法，会映射到*同一个*等价类。这正是为什么一个微生物组技巧和一个扩散模型技巧能落到一个簇：φ 压掉了**领域距离**，暴露出**结构距离**。迁移，就是这个商映射在按设计工作。
+
+**2 · 已知集合诱导出一张覆盖图——从而定义出 gap。** 给定当前原则集 `P`，L3 综合把它在一个设计空间上划分，空间的轴是反复出现的结构特征。一个 **gap** 就是某个稀疏区域，或 `rationale` / `falsifiable_prediction` 薄弱的区域。关键是：gap 是*从 `P` 自身算出来的*——一个内生的目标，不是外部 prompt。
+
+**3 · 这个循环是闭合且单调的。**
+
+```
+ P_n  ──综合──►  gaps(P_n)  ──获取 + 蒸馏──►  P_{n+1} = P_n ⊕ 新原则
+```
+
+`⊕` 是一个**去重并链接的合并**：一条新原则要么扩展 `P`，要么作为新增溯源 / `generalizes` / `contrasts` 挂到已有原则上。所以这张图只增不忘——在更丰富的 `P_{n+1}` 上重新综合，会得到*更锐利*的 gap。这个反馈（知识状态 → 下一个目标 → 更丰富的状态）就是"自进化"里的"自"。
+
+本质上这是**设计空间上的主动学习（active learning）**：gap 扮演覆盖/不确定性采样的角色，每一轮获取的，是最能填补某个欠覆盖区域的证据。
+
+> **诚实说明。** 映射 φ 和 gap 的判断由 LLM 推理完成，不是一个闭式算子；引擎的职责是维护那个结构化、去重的状态，让循环*可闭合、可复现*。这里没有收敛定理——单调累积 + 去重*本身*就是机制，而不是对它的证明。
+
 ## 亮点
 
 - 🧪 **按结构检索** —— 用问题的形状查询，而不是关键词
@@ -83,6 +109,23 @@ uv add git+https://github.com/chenpg2/kw-engine
 git clone https://github.com/chenpg2/kw-engine
 cd kw-engine && uv sync
 ```
+
+### 作为 Claude Code 插件安装
+
+让 Claude Code 自己装——把这两条 slash 命令贴进 Claude Code：
+
+```text
+/plugin marketplace add chenpg2/kw-engine
+/plugin install kw-engine@kw-engine
+```
+
+这会注册 `/kw` 和 `/kw-init` 两个 skill 以及五个子 agent。然后安装它们调用的 CLI 底座：
+
+```bash
+uv tool install git+https://github.com/chenpg2/kw-engine
+```
+
+> 插件提供*推理*（skills + agents）；`kw` CLI 提供*确定性底座*。两个都要装。
 
 ## 快速上手
 

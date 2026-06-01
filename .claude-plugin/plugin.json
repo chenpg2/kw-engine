@@ -1,18 +1,20 @@
 {
   "name": "kw-engine",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Methodology evolution engine — distill transferable principles from literature, search by problem structure",
   "author": {
     "name": "peigenchan"
   },
+  "repository": "https://github.com/chenpg2/kw-engine",
+  "homepage": "https://github.com/chenpg2/kw-engine",
   "license": "MIT",
   "keywords": [
     "knowledge-engine",
-    "papers",
-    "principles",
+    "methodology",
     "research",
+    "literature",
     "claude-code"
   ],
-  "skills": "../plugin/skills/",
-  "agents": "../plugin/agents/"
+  "skills": "./skills/",
+  "agents": "./agents/"
 }

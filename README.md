@@ -59,6 +59,32 @@ New problem arrives  →  search by its structure  →  matched mechanism + rati
 
 It's not a search index over text — it's a compiler from *empirical results* to *reusable problem-solving strategies*.
 
+## Why it self-evolves
+
+Three ingredients let the loop pick its own next move instead of waiting for a human to choose what to read.
+
+**1 · Distillation is a quotient map.** L2 abstraction strips the domain — it maps a concrete method `m` to an equivalence class under *"same problem structure, same mechanism"*:
+
+```
+φ :  concrete method  ──►  ( problem_signature , math_basis , mechanism , rationale )
+```
+
+Two methods from unrelated fields with the *same* structure map to the same class. That's exactly why a microbiome trick and a diffusion-model trick can land in one cluster: φ collapses **domain distance** and exposes **structural distance**. Transfer is the quotient working as designed.
+
+**2 · The known set induces a coverage map — and therefore gaps.** Given the current principle set `P`, L3 synthesis partitions it over a design space whose axes are the recurring structural properties. A **gap** is a region that is under-populated, or where `rationale` / `falsifiable_prediction` is weak. Crucially a gap is *computed from `P` itself* — an endogenous objective, not an external prompt.
+
+**3 · The loop is closed and monotone.**
+
+```
+ P_n  ──synthesize──►  gaps(P_n)  ──acquire + distill──►  P_{n+1} = P_n ⊕ new principles
+```
+
+`⊕` is a **dedup-and-link merge**: a new principle either extends `P` or attaches to an existing one as added provenance / `generalizes` / `contrasts`. So the graph only accumulates — it never forgets — and re-synthesizing over a richer `P_{n+1}` yields *sharper* gaps. That feedback (knowledge state → next objective → richer state) is the "self" in self-evolving.
+
+In spirit this is **active learning over a design space**: gaps play the role of coverage/uncertainty sampling, and each round acquires the evidence that most reduces an under-covered region.
+
+> **Honest note.** The map φ and the gap judgment are performed by LLM reasoning, not a closed-form operator; the engine's job is to maintain the structured, deduplicated state that makes the loop *closeable and reproducible*. There is no convergence theorem here — the monotone accumulation + dedup *is* the mechanism, not a proof of it.
+
 ## Highlights
 
 - 🧪 **Structure-indexed retrieval** — query by the shape of your problem, not keywords
@@ -83,6 +109,23 @@ uv add git+https://github.com/chenpg2/kw-engine
 git clone https://github.com/chenpg2/kw-engine
 cd kw-engine && uv sync
 ```
+
+### Install as a Claude Code plugin
+
+Let Claude Code install it for you — paste these two slash commands into Claude Code:
+
+```text
+/plugin marketplace add chenpg2/kw-engine
+/plugin install kw-engine@kw-engine
+```
+
+This registers the `/kw` and `/kw-init` skills plus the five sub-agents. Then install the CLI substrate they call:
+
+```bash
+uv tool install git+https://github.com/chenpg2/kw-engine
+```
+
+> The plugin provides the *reasoning* (skills + agents); the `kw` CLI provides the *deterministic substrate*. You want both.
 
 ## Quick start
 

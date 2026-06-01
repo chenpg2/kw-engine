@@ -1,0 +1,29 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "kw-engine",
+  "description": "Methodology evolution engine — distill transferable principles from literature, search by problem structure",
+  "owner": {
+    "name": "peigenchan"
+  },
+  "plugins": [
+    {
+      "name": "kw-engine",
+      "description": "Distill transferable problem-solving principles from literature (L1 faithful -> L2 abstract -> L3 synthesis); /kw orchestrates fetch/read/distill/synthesize/verify across sub-agents.",
+      "version": "1.0.0",
+      "author": {
+        "name": "peigenchan"
+      },
+      "source": "./",
+      "category": "research",
+      "homepage": "https://github.com/chenpg2/kw-engine",
+      "tags": [
+        "research",
+        "literature",
+        "methodology",
+        "knowledge-engine",
+        "multi-agent"
+      ]
+    }
+  ],
+  "version": "1.0.0"
+}
