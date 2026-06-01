@@ -15,6 +15,28 @@ from kw_engine.store.sqlite import rebuild_index_db
 from kw_engine.verify import run_checks
 
 app = typer.Typer(no_args_is_help=True)
+kb_app = typer.Typer(help="Manage named knowledge bases (global registry)")
+app.add_typer(kb_app, name="kb")
+
+_REGISTRY_PATH = Path.home() / ".kw" / "registry.yaml"
+
+
+def _load_registry() -> dict[str, str]:
+    import yaml
+
+    if _REGISTRY_PATH.exists():
+        data = yaml.safe_load(_REGISTRY_PATH.read_text()) or {}
+        return data.get("knowledge_bases", {})
+    return {}
+
+
+def _save_registry(kbs: dict[str, str]) -> None:
+    import yaml
+
+    _REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _REGISTRY_PATH.write_text(
+        yaml.dump({"knowledge_bases": kbs}, default_flow_style=False, sort_keys=True)
+    )
 
 
 def _resolve_memory_dir(memory_dir: Path | None) -> Path:
@@ -43,25 +65,75 @@ def _resolve_memory_dir(memory_dir: Path | None) -> Path:
     raise typer.Exit(1)
 
 
-@app.command()
-def link(
-    memory_path: str = typer.Argument(
-        help="Path to a shared memory/ directory (e.g. ~/knowledge_wiki/memory)"
-    ),
-    target: Path = typer.Argument(
-        ".", help="Project directory to link (default: current directory)"
-    ),
+@kb_app.command("add")
+def kb_add(
+    name: str = typer.Argument(help="Name for this knowledge base (e.g. microbiome)"),
+    memory_path: str = typer.Argument(help="Path to the memory/ directory"),
 ) -> None:
-    """Link a project to a shared knowledge base (no local copy)."""
-    import yaml
-
+    """Register a named knowledge base in the global registry."""
     resolved = Path(memory_path).expanduser().resolve()
     if not (resolved / "SCHEMA.md").exists():
         typer.echo(f"ERROR: {resolved} does not contain SCHEMA.md", err=True)
         raise typer.Exit(1)
 
-    target = target.resolve()
-    kw_dir = target / ".kw"
+    kbs = _load_registry()
+    kbs[name] = str(resolved)
+    _save_registry(kbs)
+    typer.echo(f"Registered: {name} → {resolved}")
+
+
+@kb_app.command("list")
+def kb_list() -> None:
+    """List all registered knowledge bases."""
+    kbs = _load_registry()
+    if not kbs:
+        typer.echo("No knowledge bases registered. Use 'kw kb add <name> <path>'.")
+        return
+    for name, path in sorted(kbs.items()):
+        exists = "ok" if Path(path).exists() else "MISSING"
+        typer.echo(f"  {name:20s} {path}  [{exists}]")
+
+
+@kb_app.command("remove")
+def kb_remove(
+    name: str = typer.Argument(help="Name of the knowledge base to remove"),
+) -> None:
+    """Remove a knowledge base from the registry (does not delete files)."""
+    kbs = _load_registry()
+    if name not in kbs:
+        typer.echo(f"ERROR: '{name}' not in registry", err=True)
+        raise typer.Exit(1)
+    del kbs[name]
+    _save_registry(kbs)
+    typer.echo(f"Removed: {name}")
+
+
+@app.command()
+def link(
+    name_or_path: str = typer.Argument(
+        help="Registry name (e.g. microbiome) or path to memory/ directory"
+    ),
+    target: Path = typer.Argument(
+        ".", help="Project directory to link (default: current directory)"
+    ),
+) -> None:
+    """Link a project to a knowledge base (by name or path)."""
+    import yaml
+
+    # Resolve: check registry first, then treat as path
+    kbs = _load_registry()
+    if name_or_path in kbs:
+        resolved = Path(kbs[name_or_path]).resolve()
+        typer.echo(f"Using registered knowledge base: {name_or_path}")
+    else:
+        resolved = Path(name_or_path).expanduser().resolve()
+
+    if not (resolved / "SCHEMA.md").exists():
+        typer.echo(f"ERROR: {resolved} does not contain SCHEMA.md", err=True)
+        raise typer.Exit(1)
+
+    target_dir = target.resolve()
+    kw_dir = target_dir / ".kw"
     kw_dir.mkdir(parents=True, exist_ok=True)
     config_path = kw_dir / "config.yaml"
 
@@ -74,9 +146,11 @@ def link(
         cfg["paths"] = {}
     cfg["paths"]["memory"] = str(resolved)
 
-    config_path.write_text(yaml.dump(cfg, default_flow_style=False, sort_keys=False))
-    typer.echo(f"Linked: {target} → {resolved}")
-    typer.echo("All kw commands in this project now use the shared knowledge base.")
+    config_path.write_text(
+        yaml.dump(cfg, default_flow_style=False, sort_keys=False)
+    )
+    typer.echo(f"Linked: {target_dir} → {resolved}")
+    typer.echo("All kw commands in this project now use this knowledge base.")
 
 
 @app.command()
