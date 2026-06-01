@@ -1,7 +1,7 @@
 import sqlite3
-from pathlib import Path
-from kw_engine.store.sqlite import create_schema, rebuild_index_db
+
 from kw_engine.store.markdown import scan_memory_dir
+from kw_engine.store.sqlite import create_schema, rebuild_index_db
 
 
 def test_create_schema(tmp_path):

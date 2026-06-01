@@ -3,20 +3,22 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from kw_engine.models import PaperFull, Principle
 
 
-def _parse_frontmatter(path: Path) -> dict:
+def _parse_frontmatter(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---"):
         raise ValueError(f"No YAML front-matter in {path}")
     parts = text.split("---", 2)
     if len(parts) < 3:
         raise ValueError(f"Malformed front-matter in {path}")
-    return yaml.safe_load(parts[1])
+    result: dict[str, Any] = yaml.safe_load(parts[1])
+    return result
 
 
 def read_paper_md(path: Path) -> PaperFull:

@@ -25,6 +25,10 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]  # typer uses function calls in argument defaults by design
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B905"]  # zip strict not needed in tests with pre-asserted equal lengths
 
 [tool.mypy]
 python_version = "3.11"
@@ -35,4 +39,9 @@ plugins = ["pydantic.mypy"]
 testpaths = ["tests"]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10"]
+dev = [
+    "pytest>=8",
+ "ruff>=0.5",
+ "mypy>=1.10",
+ "types-pyyaml>=6.0.12.20260518",
+]

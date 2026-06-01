@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from kw_engine.store.markdown import scan_memory_dir
 from kw_engine.store.json_proj import build_index_json
+from kw_engine.store.markdown import scan_memory_dir
 
 
 def _wiki_root() -> Path:
@@ -64,7 +64,9 @@ def test_roundtrip_index_json(wiki_memory):
     )
     for ep, rp in zip(existing_papers, rebuilt_papers):
         assert ep["id"] == rp["id"]
-        assert ep["status"] == rp["status"], f"Paper {ep['id']}: status {ep['status']} vs {rp['status']}"
+        assert ep["status"] == rp["status"], (
+            f"Paper {ep['id']}: status {ep['status']} vs {rp['status']}"
+        )
         assert ep["doi"] == rp["doi"], f"Paper {ep['id']}: doi mismatch"
         # paper→principles is derived from provenance; rebuilt is authoritative.
         # hand-maintained index may lag, so assert existing is a subset of rebuilt.
@@ -96,7 +98,10 @@ def test_roundtrip_index_json(wiki_memory):
 
     # Synthesis
     assert existing["synthesis"]["last_run"] == rebuilt["synthesis"]["last_run"]
-    assert existing["synthesis"]["n_principles_at_last_run"] == rebuilt["synthesis"]["n_principles_at_last_run"]
+    assert (
+        existing["synthesis"]["n_principles_at_last_run"]
+        == rebuilt["synthesis"]["n_principles_at_last_run"]
+    )
 
 
 def test_verify_passes(wiki_memory):

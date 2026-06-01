@@ -7,8 +7,8 @@ from pathlib import Path
 
 import typer
 
-from kw_engine.store.markdown import scan_memory_dir
 from kw_engine.store.json_proj import build_index_json
+from kw_engine.store.markdown import scan_memory_dir
 from kw_engine.store.sqlite import rebuild_index_db
 from kw_engine.verify import run_checks
 
@@ -17,11 +17,11 @@ app = typer.Typer(no_args_is_help=True)
 
 def _resolve_memory_dir(memory_dir: Path | None) -> Path:
     if memory_dir:
-        return memory_dir
+        return memory_dir.resolve()
     cwd = Path.cwd()
     for parent in [cwd, *cwd.parents]:
         if (parent / "memory" / "SCHEMA.md").exists():
-            return parent / "memory"
+            return (parent / "memory").resolve()
     typer.echo("ERROR: cannot find memory/ directory (no SCHEMA.md found)", err=True)
     raise typer.Exit(1)
 
@@ -90,7 +90,10 @@ def status(
     l1 = [p for p in papers if p.status == "L1"]
     complete = [p for p in papers if p.status == "complete"]
 
-    typer.echo(f"Papers: {len(papers)} total ({len(complete)} complete, {len(l1)} L1, {len(pending)} pending)")
+    typer.echo(
+        f"Papers: {len(papers)} total"
+        f" ({len(complete)} complete, {len(l1)} L1, {len(pending)} pending)"
+    )
     typer.echo(f"Principles: {len(principles)}")
 
     index_path = mem / "index.json"
@@ -99,7 +102,8 @@ def status(
         syn = idx.get("synthesis", {})
         n_at_last = syn.get("n_principles_at_last_run", 0)
         if len(principles) > n_at_last:
-            typer.echo(f"Synthesis: STALE ({len(principles) - n_at_last} new principles since last run)")
+            delta = len(principles) - n_at_last
+            typer.echo(f"Synthesis: STALE ({delta} new principles since last run)")
         else:
             typer.echo(f"Synthesis: up to date (last run: {syn.get('last_run', 'never')})")
 

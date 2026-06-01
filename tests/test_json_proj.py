@@ -1,4 +1,5 @@
 import json
+
 from kw_engine.store.json_proj import build_index_json
 from kw_engine.store.markdown import scan_memory_dir
 

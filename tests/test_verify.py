@@ -1,5 +1,5 @@
-from kw_engine.verify import run_checks, Verdict
 from kw_engine.store.markdown import scan_memory_dir
+from kw_engine.verify import run_checks
 
 
 def test_clean_corpus_passes(sample_memory):

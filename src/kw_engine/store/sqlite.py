@@ -7,7 +7,6 @@ from pathlib import Path
 
 from kw_engine.models import LinkEntry, PaperFull, Principle, paper_id_from_provenance
 
-
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS papers (
     id TEXT PRIMARY KEY,
