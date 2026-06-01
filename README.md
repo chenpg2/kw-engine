@@ -1,109 +1,162 @@
+<div align="center">
+
 # kw-engine
 
-Methodology evolution engine — distill transferable problem-solving principles from literature, search by problem structure, get grounded mechanism + rationale.
+**Stop re-reading papers. Start reusing the *why*.**
 
-## Why
+A methodology evolution engine that distills transferable problem-solving principles from literature — so when you hit a new problem, you search by its *structure* and get back a mechanism that works, plus the reason it works.
 
-When you face a new problem, the question is not "which papers are relevant" but **"what mathematical mechanism attacks this problem's structure, and why does it work?"** kw-engine answers this by continuously distilling literature into a library of domain-stripped principles — each encoding: *when* it applies (problem signature), *what* to do (mechanism + math basis), and *why* it works (first-principles rationale).
+[![CI](https://github.com/chenpg2/kw-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/chenpg2/kw-engine/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Tests](https://img.shields.io/badge/tests-41%20passing-brightgreen)
+![Types](https://img.shields.io/badge/mypy-strict-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## How it works
+**English** · [简体中文](README.zh-CN.md)
 
-Literature flows through three distillation layers:
+</div>
 
-- **L1 (faithful extraction):** what the paper says, with section locators — no interpretation
-- **L2 (abstraction):** strip the domain, keep the transferable logic — problem-signature ↔ mechanism ↔ rationale
-- **L3 (synthesis):** cross-paper design-space map, contradictions, gaps — where the knowledge *evolves*
+---
 
-The cycle:
+## The problem
+
+You read a paper, extract a clever trick, and forget it. Six months later you face a problem that the *same trick* would solve — but it was in a different field, used different words, and your notes are a pile of PDFs. Your bottleneck was never finding papers. It was **reusing the underlying method across domains.**
+
+kw-engine treats that as the actual problem.
+
+## What it does
+
+It distills literature through three layers, stripping away the domain and keeping the transferable logic:
+
 ```
-Read papers → Distill principles → Synthesize design space → Identify gaps → Read more papers
-                                                                    ↑
-New problem arrives → Search by structure → Match mechanism → Apply (or discover gap)
+ Paper PDF
+   │
+   ├─  L1  faithful extraction   what the paper says, with section locators — no interpretation
+   │
+   ├─  L2  abstraction           strip the biology/domain, keep the transferable core:
+   │                               problem-signature   ·  WHEN it applies (problem structure)
+   │                               ↔ mechanism + math  ·  WHAT to do
+   │                               ↔ rationale         ·  WHY the structure↔mechanism mapping holds
+   │
+   └─  L3  synthesis             cluster principles into a design-space map; surface
+                                  contradictions and GAPS — where the knowledge evolves
 ```
 
-This is not RAG (retrieve chunks) or a citation manager (organize references). It's a **methodology compiler** — empirical results in, reusable problem-solving strategies out.
+Then the payoff:
 
-## Separation of concerns
+```
+New problem arrives  →  search by its structure  →  matched mechanism + rationale + when-it-breaks
+```
 
-- **Reasoning** (read/distill/synthesize) — irreducibly LLM, stays in agents
-- **Substrate** (this package) — deterministic, atomic CLI commands for mutations and queries
+## Why it's different
 
-## Installation
+|  | What it retrieves | Indexed by |
+|---|---|---|
+| **RAG / vector search** | text chunks | surface semantics |
+| **Zotero / citation managers** | references & PDFs | metadata, tags |
+| **Skill libraries** (e.g. Voyager) | executable task code | task name |
+| **kw-engine** | **mechanism + why-it-works + when-it-fails** | **problem structure** |
+
+It's not a search index over text — it's a compiler from *empirical results* to *reusable problem-solving strategies*.
+
+## Highlights
+
+- 🧪 **Structure-indexed retrieval** — query by the shape of your problem, not keywords
+- 🧬 **Domain-stripped principles** — a microbiome trick and a diffusion-model trick land in the same cluster when their *math structure* matches
+- 🔁 **Knowledge that evolves** — L3 synthesis surfaces real gaps, which become your next reading list
+- 🪶 **Markdown is the source of truth** — git-diffable, reviewable records; SQLite + JSON are rebuildable indices
+- ⚛️ **Deterministic & atomic** — every mutation is temp-file-rename + file-locked; no half-written state
+- 🤖 **Two-tier by design** — LLM agents do the reasoning; a typed Python CLI does the bookkeeping (cheap model reads, strong model abstracts)
+- 🔌 **Ships as a Claude Code plugin** — `/kw` orchestrates the whole loop; or drive the `kw` CLI yourself
+- ✅ **Production-grade substrate** — 41 tests, `mypy --strict`, `ruff`, CI on Python 3.11–3.13
+
+## Install
 
 ```bash
-# From source
-git clone <repo-url>
-cd kw-engine
-uv sync
+# As a CLI tool (recommended — gives you the `kw` command)
+uv tool install git+https://github.com/chenpg2/kw-engine
+
+# Or as a project dependency
+uv add git+https://github.com/chenpg2/kw-engine
+
+# Or clone for development
+git clone https://github.com/chenpg2/kw-engine
+cd kw-engine && uv sync
 ```
 
-## Quick Start
+## Quick start
 
 ```bash
-# Initialize a new workspace
-uv run kw init
+# 1. Initialize a workspace in any repo
+kw init
+kw status                                  # 0 papers, 0 principles — empty engine
 
-# Register a paper
-uv run kw add-paper 2304.04740 --doi "10.48550/arXiv.2304.04740" --title "Flow Matching"
+# 2. Acquire a paper (multi-source open-access fallback + PDF validation)
+kw fetch 2304.04740
 
-# Add a principle (agents call this after distillation)
-uv run kw add-principle \
-  --title "Reduce dynamics to static coupling + regression" \
-  --abstract "..." \
-  --sig "unpaired marginals" --sig "continuous-time process" \
+# 3. Register and distill (agents fill these after reading; or do it by hand)
+kw add-paper 2304.04740 --title "Flow Matching for Generative Modeling"
+kw add-principle \
+  --title "Reduce hard dynamics optimization to static coupling + regression onto bridges" \
+  --abstract "When a theorem identifies the dynamic optimum as a mixture of simple conditional bridges, replace path optimization with a coupling + closed-form regression." \
+  --sig "unpaired marginal snapshots" --sig "continuous-time generative process" \
   --math "optimal-transport" --math "conditional-flow" \
-  --mechanism "..." \
-  --rationale "..." \
-  --regime "N≥100 samples per marginal" \
-  --prediction "..." \
-  --boundaries "..." \
+  --mechanism "Solve a static coupling, then regress a vector field onto closed-form conditional bridges." \
+  --rationale "The dynamic least-action optimum decomposes into per-pair bridges, so the hard part collapses to a coupling problem." \
+  --regime "needs paired or OT-coupleable marginals; N large enough to estimate the coupling" \
+  --prediction "straightening the coupling reduces sampling steps without retraining" \
+  --boundaries "fails if the bridge family doesn't match the true conditional process" \
   --prov "2304.04740 §3.2"
 
-# Search for relevant principles
-uv run kw search "optimal transport dynamics"
+# 4. The payoff — search by problem structure
+kw search "optimal transport dynamics"
 
-# Verify integrity
-uv run kw verify
-
-# Rebuild index (after manual edits)
-uv run kw reindex
-
-# Fetch a paper PDF
-uv run kw fetch 2304.04740
+# 5. Keep it honest
+kw verify                                  # checks provenance, links, required fields
 ```
 
-## CLI Commands
+### Or let Claude Code drive it
+
+Installed as a plugin, just run the skill — it orchestrates fetch → read → distill → synthesize → verify across sub-agents, with the right model on each step:
+
+```
+/kw          # detects state, offers a menu, runs the loop — you never hand-edit a file
+/kw-init     # scaffold a workspace from natural language
+```
+
+## CLI reference
 
 | Command | Purpose |
-|---------|---------|
-| `kw init [dir]` | Scaffold a new workspace |
-| `kw add-paper <id>` | Register a paper (creates scaffold + index entry) |
-| `kw add-principle` | Allocate P-####, create md, update index + SQLite |
-| `kw add-link <from> <to> <type>` | Add a link between principles |
-| `kw search "<query>"` | Keyword-match principles by signature/math_basis |
-| `kw fetch <id>` | Acquire PDF + validate + register |
-| `kw reindex` | Rebuild index.json + SQLite from markdown |
-| `kw verify` | Check SCHEMA §6 invariants |
-| `kw status` | Show engine state |
+|---|---|
+| `kw init [dir]` | Scaffold a workspace (`memory/`, `.kw/`, `process/`, `paper/`) |
+| `kw fetch <id\|doi\|title>` | Acquire a PDF via OA fallback chain + validate + register |
+| `kw add-paper <id>` | Register a paper (scaffold record + index entry) |
+| `kw add-principle …` | Allocate `P-####`, write the principle, update index + SQLite |
+| `kw add-link <from> <to> <type>` | Link principles (`generalizes`/`contrasts`/`composes`/…) |
+| `kw search "<query>"` | Retrieve principles by problem-signature / math-basis |
+| `kw reindex` | Rebuild `index.json` + SQLite from markdown |
+| `kw verify` | Check integrity invariants (provenance, links, required fields) |
+| `kw status` | Counts, pending papers, synthesis staleness |
 
 ## Architecture
 
 ```
-Markdown (source of truth)     →  index.json (diffable projection)
-memory/papers/*.md                 ↘
-memory/principles/*.md          →  .kw/index.db (query index, gitignored)
+ memory/papers/*.md          ┐
+ memory/principles/*.md       ├─ source of truth (git-tracked, human-readable)
+ memory/synthesis/*.md        ┘
+        │  kw reindex
+        ▼
+ memory/index.json     (diffable catalog projection, committed)
+ .kw/index.db          (SQLite query index, gitignored, rebuildable)
 ```
 
-- **Markdown is truth.** SQLite + index.json are derived (`kw reindex` rebuilds both).
-- **Atomic writes.** All mutations use temp-file rename + file lock.
-- **No silent fallback.** Validation errors raise, never coerce.
+- **Markdown is truth.** Indices are derived — delete and rebuild any time.
+- **Atomic writes.** Temp-file rename + `flock` on the index; no pid collisions, no torn writes.
+- **No silent fallback.** Validation errors raise; the engine never writes a placeholder record.
 
-## Claude Code Plugin
+## Honest scope
 
-kw-engine ships as a Claude Code plugin with:
-- `/kw` skill — orchestrator for the paper ingestion loop
-- `/kw-init` skill — scaffold via natural language
-- 5 agents: kw-fetcher, kw-reader, kw-distiller, kw-synthesizer, kw-verifier
+kw-engine is a **tool and a method**, not a benchmarked research claim. It does not (yet) prove that structure-indexed retrieval beats RAG on a downstream task — that would need a controlled evaluation. What it *does* give you today is a disciplined, reproducible substrate for building and querying a transferable-methodology library, with the LLM reasoning cleanly separated from deterministic storage.
 
 ## Development
 
@@ -111,9 +164,9 @@ kw-engine ships as a Claude Code plugin with:
 uv sync
 uv run pytest -v          # 41 tests
 uv run ruff check .       # lint
-uv run mypy src/          # type check
+uv run mypy src/          # strict type check
 ```
 
 ## License
 
-MIT
+MIT © 2026
