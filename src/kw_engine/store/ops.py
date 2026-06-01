@@ -5,14 +5,15 @@ Each operation:
 2. Validates pre-conditions.
 3. Writes the markdown file (new or modified).
 4. Writes index.json back atomically via a temp-file rename.
-
-SQLite is a derived index rebuilt by `kw reindex`; ops do not touch it directly.
+5. If ``.kw/index.db`` exists, inserts the new record into SQLite so that
+   search results stay fresh without requiring a manual ``kw reindex``.
 """
 
 from __future__ import annotations
 
 import fcntl
 import json
+import sqlite3
 import tempfile
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -20,6 +21,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
+from kw_engine.models import paper_id_from_provenance
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -151,6 +154,123 @@ def _insert_link_in_text(text: str, link_str: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# SQLite incremental sync helpers
+# ---------------------------------------------------------------------------
+
+
+def _get_db_path(memory_dir: Path) -> Path | None:
+    """Return the path to ``.kw/index.db`` if it exists, else ``None``."""
+    db_path = memory_dir.parent / ".kw" / "index.db"
+    return db_path if db_path.exists() else None
+
+
+def _sync_paper_sqlite(memory_dir: Path, paper_id: str, doi: str | None, title: str) -> None:
+    """Insert a paper row into SQLite if index.db is present."""
+    db_path = _get_db_path(memory_dir)
+    if db_path is None:
+        return
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "INSERT OR IGNORE INTO papers"
+            " (id, status, doi, title, bib_authors, bib_venue, bib_year)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (paper_id, "pending", doi, title, "", "", None),
+        )
+        conn.commit()
+        conn.close()
+    except sqlite3.Error:
+        pass  # SQLite sync is best-effort; JSON is the source of truth
+
+
+def _sync_principle_sqlite(
+    memory_dir: Path,
+    pid: str,
+    title: str,
+    abstraction_level: str,
+    mechanism: str,
+    rationale: str,
+    falsifiable_prediction: str,
+    boundaries: str,
+    rubric_version: str,
+    problem_signature: list[str],
+    math_basis: list[str],
+    provenance: list[str],
+    links: list[str],
+) -> None:
+    """Insert a principle and its child rows into SQLite if index.db is present."""
+    db_path = _get_db_path(memory_dir)
+    if db_path is None:
+        return
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "INSERT OR IGNORE INTO principles"
+            " (id, title, abstraction_level, mechanism, rationale,"
+            "  falsifiable_prediction, boundaries, rubric_version)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (pid, title, abstraction_level, mechanism, rationale,
+             falsifiable_prediction, boundaries, rubric_version),
+        )
+        for sig in problem_signature:
+            conn.execute(
+                "INSERT INTO principle_signatures (principle_id, signature) VALUES (?, ?)",
+                (pid, sig),
+            )
+        for basis in math_basis:
+            conn.execute(
+                "INSERT INTO principle_math_basis (principle_id, basis) VALUES (?, ?)",
+                (pid, basis),
+            )
+        for prov in provenance:
+            parts = prov.split(None, 1)
+            paper_id = paper_id_from_provenance(prov)
+            locator = parts[1] if len(parts) > 1 else ""
+            conn.execute(
+                "INSERT INTO principle_provenance (principle_id, paper_id, locator)"
+                " VALUES (?, ?, ?)",
+                (pid, paper_id, locator),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO paper_principles (paper_id, principle_id) VALUES (?, ?)",
+                (paper_id, pid),
+            )
+        for link_str in links:
+            if ":" in link_str:
+                link_type, target = link_str.split(":", 1)
+                conn.execute(
+                    "INSERT INTO links (source_id, target_id, link_type) VALUES (?, ?, ?)",
+                    (pid, target, link_type),
+                )
+        conn.commit()
+        conn.close()
+    except sqlite3.Error:
+        pass  # SQLite sync is best-effort; JSON is the source of truth
+
+
+def _sync_link_sqlite(
+    memory_dir: Path,
+    from_pid: str,
+    to_pid: str,
+    link_type: str,
+) -> None:
+    """Insert a link row into SQLite if index.db is present."""
+    db_path = _get_db_path(memory_dir)
+    if db_path is None:
+        return
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "INSERT INTO links (source_id, target_id, link_type) VALUES (?, ?, ?)",
+            (from_pid, to_pid, link_type),
+        )
+        conn.commit()
+        conn.close()
+    except sqlite3.Error:
+        pass  # SQLite sync is best-effort; JSON is the source of truth
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -218,6 +338,9 @@ def add_paper(
             "principles": [],
         })
         _write_index_atomic(memory_dir, idx)
+
+    # Sync to SQLite (outside the lock — best-effort, non-blocking)
+    _sync_paper_sqlite(memory_dir, paper_id, doi, title or "")
 
     return md_path
 
@@ -304,6 +427,23 @@ def add_principle(
         })
         _write_index_atomic(memory_dir, idx)
 
+    # Sync to SQLite (outside the lock — best-effort, non-blocking)
+    _sync_principle_sqlite(
+        memory_dir,
+        pid=pid,
+        title=title,
+        abstraction_level=abstraction_level,
+        mechanism=mechanism,
+        rationale=rationale,
+        falsifiable_prediction=falsifiable_prediction,
+        boundaries=boundaries,
+        rubric_version=_RUBRIC_VERSION,
+        problem_signature=problem_signature,
+        math_basis=math_basis,
+        provenance=provenance,
+        links=links,
+    )
+
     return pid
 
 
@@ -352,3 +492,6 @@ def add_link(
 
         if changed:
             _write_index_atomic(memory_dir, idx)
+
+    # Sync to SQLite (outside the lock — best-effort, non-blocking)
+    _sync_link_sqlite(memory_dir, from_pid, to_pid, link_type)

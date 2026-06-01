@@ -152,6 +152,47 @@ def test_add_principle_creates_lock_file(tmp_path):
     assert (mem / ".index.lock").exists()
 
 
+def test_add_principle_syncs_sqlite(tmp_path):
+    """add_principle inserts into SQLite if index.db exists."""
+    import sqlite3
+
+    from kw_engine.store.sqlite import create_schema
+
+    mem = tmp_path / "memory"
+    mem.mkdir()
+    (mem / "papers").mkdir()
+    (mem / "principles").mkdir()
+
+    idx = {"version": 1, "counters": {"principle": 0}, "papers": [
+        {"id": "p1", "status": "complete", "doi": None, "title": "P", "principles": []}
+    ], "principles": [], "synthesis": {"last_run": None, "n_principles_at_last_run": 0}}
+    (mem / "index.json").write_text(json.dumps(idx))
+
+    # Create empty SQLite db
+    kw_dir = tmp_path / ".kw"
+    kw_dir.mkdir()
+    conn = create_schema(kw_dir / "index.db")
+    conn.close()
+
+    add_principle(
+        mem, title="T", abstraction_level="a", problem_signature=["sig1"],
+        math_basis=["basis1"], mechanism="m", rationale="r", data_regime=["d"],
+        falsifiable_prediction="f", boundaries="b", provenance=["p1 §1"],
+    )
+
+    # Verify it's in SQLite
+    conn = sqlite3.connect(kw_dir / "index.db")
+    row = conn.execute("SELECT id, title FROM principles WHERE id='P-0001'").fetchone()
+    assert row is not None
+    assert row[1] == "T"
+
+    sigs = conn.execute(
+        "SELECT signature FROM principle_signatures WHERE principle_id='P-0001'"
+    ).fetchall()
+    assert ("sig1",) in sigs
+    conn.close()
+
+
 def test_add_link(tmp_path):
     """add_link updates frontmatter and index."""
     mem = tmp_path / "memory"
