@@ -8,6 +8,8 @@
 
 A methodology evolution engine: it distills transferable problem-solving principles from literature, so when you hit a new problem you search by its *structure* and get back a mechanism that works — plus the reason it works and when it breaks.
 
+You drive it by **talking to Claude Code**. No file editing, no commands.
+
 [![CI](https://github.com/chenpg2/kw-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/chenpg2/kw-engine/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Tests](https://img.shields.io/badge/tests-52%20passing-brightgreen)
@@ -65,123 +67,118 @@ It's not a search index over text. It's a compiler from *empirical results* to *
 
 ## Get started
 
-### 1. Install the CLI
+kw-engine runs inside **Claude Code**. Install it once, then you just talk to Claude about your papers.
+
+### Install (one time)
+
+Three lines in your terminal — the only commands you'll ever need:
 
 ```bash
-uv tool install git+https://github.com/chenpg2/kw-engine   # gives you the `kw` command
+uv tool install git+https://github.com/chenpg2/kw-engine     # the engine
+claude plugins marketplace add chenpg2/kw-engine             # the Claude Code plugin…
+claude plugins install kw-engine@kw-engine                   # …skills + agents that drive it
 ```
 
-### 2. (Optional) Install the Claude Code plugin
+After this, everything happens in conversation.
 
-The plugin adds the reasoning layer — the `/kw` skill and five sub-agents that read, distill, and synthesize for you. Run in your terminal:
+### Then just talk to Claude
 
-```bash
-claude plugins marketplace add chenpg2/kw-engine
-claude plugins install kw-engine@kw-engine
-```
+Open Claude Code in any folder and say what you want. Claude uses the engine for you and shows you the results — you never touch a file or a command.
 
-> The `kw` CLI is the deterministic substrate; the plugin is the LLM reasoning that drives it. For the full experience you want both; the CLI alone works fine for manual use.
+| You say… | Claude does |
+|---|---|
+| *"Set up a knowledge base here."* | scaffolds the workspace |
+| *"Process this paper: arxiv 2304.04740"* | fetches the PDF, reads it, distills principles, shows you what it learned |
+| *"What do we know about optimal transport?"* | searches by problem structure → matching mechanisms + why they work |
+| *"What are the gaps in our knowledge?"* | shows under-covered regions — your next reading list |
+| *"Improve the distiller — review the rubric and apply it."* | runs the self-improvement loop (asks before changing anything) |
 
-### 3. Sixty-second tour
+Prefer a guided menu? Type `/kw` and Claude walks you through fetch → read → distill → synthesize → verify.
 
-```bash
-kw init                                    # scaffold a workspace (memory/, .kw/, process/, paper/)
-kw fetch 2304.04740                        # acquire a PDF (open-access fallback chain + validation)
-kw add-paper 2304.04740 --title "Flow Matching for Generative Modeling"
-kw add-principle \
-  --title "Reduce hard dynamics optimization to static coupling + regression onto bridges" \
-  --sig "unpaired marginal snapshots" --sig "continuous-time generative process" \
-  --math "optimal-transport" --math "conditional-flow" \
-  --mechanism "Solve a static coupling, then regress a vector field onto closed-form bridges." \
-  --rationale "The dynamic optimum decomposes into per-pair bridges, so it collapses to a coupling." \
-  --regime "needs paired or OT-coupleable marginals; N large enough to estimate the coupling" \
-  --prediction "straightening the coupling reduces sampling steps without retraining" \
-  --boundaries "fails if the bridge family doesn't match the true conditional process" \
-  --prov "2304.04740 §3.2"
+> **Like the terminal, or want to script it?** Every action above also has a `kw` command — see the [CLI reference](#cli-reference-for-scripting--automation) at the end. It's optional.
 
-kw search "optimal transport dynamics"     # ← the payoff: retrieve by problem structure
-kw verify                                  # check integrity (provenance, links, required fields)
-kw ui                                      # optional: browse/search/verify in a terminal UI
-```
+### Working with multiple topics
 
-### Let Claude Code drive it
+Keep separate knowledge bases for separate research areas and tell Claude which to use:
 
-With the plugin installed, you never hand-edit a record — the skill orchestrates the whole loop, using the cheap model to read and the strong model to abstract:
+> *"Register my microbiome knowledge base at `~/research/microbiome-kb`."*
+> *"Switch this project to the causal-inference knowledge base."*
+> *"What do we know about intervention identifiability?"*
 
-```
-/kw          # detects state, offers a menu, runs fetch → read → distill → synthesize → verify
-/kw-init     # scaffold a workspace from natural language
-```
-
----
-
-## Knowledge bases: one library, many projects
-
-A knowledge base lives in one place; any project links to it by name. No copies.
-
-```bash
-# Register topic-specific libraries once (stored in ~/.kw/registry.yaml)
-kw kb add microbiome  ~/research/microbiome-kb/memory
-kw kb add causal      ~/research/causal-inference-kb/memory
-kw kb list
-
-# In any project, link by name — every kw command now uses that library
-cd ~/my-project
-kw link microbiome
-kw search "simplex dynamics"
-
-# Switch topics anytime
-kw link causal
-kw search "intervention identifiability"
-```
-
-`kw link` writes a small `.kw/config.yaml` pointing at the shared library. Multiple projects can share one knowledge base at the same time.
+One library can back many projects at once — nothing is copied.
 
 ---
 
 ## How it improves itself
 
-There are two loops. **Loop 1 is the core** — it's how the knowledge evolves and runs whenever you absorb papers. **Loop 2 is optional** — an opt-in enhancement for when you want the distiller itself to get better over time. The engine is fully functional with Loop 2 switched off (you just never run the `kw rubric` commands).
+Two loops. **Loop 1 is the core** — it's how the knowledge evolves, and it runs whenever you absorb papers. **Loop 2 is optional** — turn it on when you want the distiller itself to get better over time. The engine is fully functional with Loop 2 off.
 
 ### Loop 1 — the knowledge grows (core, gap-driven)
 
-`L3 synthesis` clusters what you know into a design-space map and computes **gaps** — problem structures with no good mechanism yet. Gaps become your next reading list. Each new paper is deduped and linked into the graph, so re-synthesizing yields *sharper* gaps. The objective (what to read next) is generated by the current state, not handed in from outside.
+Synthesis clusters what you know into a design-space map and computes **gaps** — problem structures with no good mechanism yet. Gaps become your next reading list. Each new paper is deduped and linked into the graph, so re-synthesizing yields *sharper* gaps. The objective (what to read next) is generated by the current state, not handed in from outside. Just keep asking Claude to process papers and *"show me the gaps."*
 
-### Loop 2 — the distiller sharpens (optional, semi-automatic)
+### Loop 2 — the distiller sharpens (optional)
 
-*Skip this entirely and the engine still works — the distiller just keeps using its static rubric.* Turn it on when you've absorbed enough papers to notice recurring distillation mistakes worth fixing once and for all.
+Every distillation mistake (an abstraction that leaked a domain noun, a weak rationale) can become a rule that improves how the distiller works. This is the cheap core of [SkillOpt](https://github.com/microsoft/SkillOpt)-style "let failures edit the skill," without the training harness.
 
-Every distillation failure (an abstraction that leaked a domain noun, a weak rationale, a missed dedup) can become a rule that improves the rubric the distiller follows. This is the cheap core of [SkillOpt](https://github.com/microsoft/SkillOpt)-style "let failures edit the skill," without the training harness — because the failure signals are already produced for free by the verifier.
+**You drive it in plain language:**
 
-**It is deliberately not fully automatic.** Capturing a lesson is cheap and safe; changing the live rubric is gated by review:
+1. **While you read papers**, Claude notes the lessons on its own — you do nothing.
+2. **When you want to apply them**, say: *"Review the distiller rubric and show me what would change."* Claude audits the lessons (an independent Codex check for consistency) and summarizes the proposed changes.
+3. **To make it live**, say: *"Looks good, apply it."*
 
-| Step | Command | Who runs it | Why |
-|---|---|---|---|
-| **Capture** | `kw rubric add` | the `/kw` agent, during a batch | turn a specific failure into a general rule (staged, does **not** touch the live rubric) |
-| **Review** | `kw rubric review` | **you** | Codex audits the staged rules against the live rubric for consistency, proposes a cleaned version |
-| **Promote** | `kw rubric promote` | **you**, after reading the proposal | swap the reviewed rubric in; archives the old one, clears the queue |
-
-The manual `review` + `promote` are the **validation gate**: they stop the rubric from drifting, bloating, or accumulating contradictions. A bad rule never silently reaches the live rubric. (Want a `--auto` promote when Codex certifies a pure-addition? That's a planned opt-in; the safe default stays manual.)
-
-#### No command line? Just ask Claude
-
-With the plugin installed you never type a `kw` command — you drive Loop 2 in plain language and Claude runs the tools:
-
-1. **While you read papers**, Claude captures distillation lessons on its own. You do nothing.
-2. **When you want to apply them**, say:
-   > *"Review the distiller rubric and show me what would change."*
-
-   Claude runs the audit and summarizes the proposed changes in plain language.
-3. **To make it live**, say:
-   > *"Looks good, apply it."*
-
-   Claude promotes it. It always shows you the proposal and asks first — the live rubric never changes silently.
-
-That's all of Loop 2 without a terminal: read papers as usual, then occasionally say *"review the rubric"* and *"apply it."*
+Claude always shows you the proposal and asks first — the rubric never changes silently. That approval step is the **validation gate** that keeps it from drifting or bloating. Skip Loop 2 entirely and the distiller just keeps using its current rubric.
 
 ---
 
-## CLI reference
+## Architecture
+
+```
+ memory/papers/*.md          ┐
+ memory/principles/*.md       ├─ source of truth (git-tracked, human-readable)
+ memory/synthesis/*.md        ┘
+        │  (rebuild)
+        ▼
+ memory/index.json     (diffable catalog projection, committed)
+ .kw/index.db          (SQLite query index, gitignored, rebuildable)
+```
+
+- **Markdown is truth.** Indices are derived — delete and rebuild any time.
+- **Atomic writes.** Temp-file rename + `flock`; no torn writes, no pid collisions.
+- **No silent fallback.** Validation errors raise; the engine never writes a placeholder record.
+- **Two-tier by design.** LLM agents reason; a typed Python CLI does the bookkeeping (cheap model reads, strong model abstracts).
+
+---
+
+## Under the hood: why the loops converge
+
+For the curious — the mechanism behind "self-evolving," in three steps.
+
+**1 · Distillation is a quotient map.** L2 abstraction maps a concrete method `m` to an equivalence class under *"same problem structure, same mechanism"*:
+
+```
+φ :  concrete method  ──►  ( problem_signature , math_basis , mechanism , rationale )
+```
+
+Two methods from unrelated fields with the *same* structure map to the same class — which is why a microbiome trick and a diffusion-model trick can cluster together. φ collapses **domain distance** and exposes **structural distance**. Transfer is the quotient working as designed.
+
+**2 · The known set induces its own objective.** Over the current principle set `P`, synthesis defines a coverage map; a **gap** is an under-populated region — an endogenous target computed from `P`, not an external prompt.
+
+**3 · The loop is closed and monotone.**
+
+```
+ P_n  ──synthesize──►  gaps(P_n)  ──acquire + distill──►  P_{n+1} = P_n ⊕ new principles
+```
+
+`⊕` is a dedup-and-link merge: a new principle either extends `P` or attaches to an existing one. The graph only accumulates, so re-synthesizing over a richer `P_{n+1}` yields sharper gaps. That feedback — knowledge state → next objective → richer state — is the "self" in self-evolving. In spirit it is **active learning over a design space**.
+
+> **Honest scope.** kw-engine is a tool and a method, not a benchmarked research claim. It does not yet prove structure-indexed retrieval beats RAG on a downstream task — that needs a controlled evaluation. What it gives you today is a disciplined, reproducible substrate for building and querying a transferable-methodology library, with reasoning cleanly separated from deterministic storage.
+
+---
+
+## CLI reference (for scripting / automation)
+
+Everything Claude does maps to a `kw` command. **You don't need these for normal use** — they're here for scripting the engine, automation, or running it without Claude.
 
 | Command | Purpose |
 |---|---|
@@ -201,56 +198,28 @@ That's all of Loop 2 without a terminal: read papers as usual, then occasionally
 | `kw add-principle …` | Allocate `P-####`, write the principle, update index + SQLite |
 | `kw add-link <from> <to> <type>` | Link principles (`generalizes`/`contrasts`/`composes`/…) |
 | `kw search "<query>"` | Retrieve principles by problem-signature / math-basis |
-| **Self-improving rubric** (see [Loop 2](#loop-2--the-distiller-sharpens-semi-automatic)) | |
+| **Self-improving rubric** (optional, see [Loop 2](#loop-2--the-distiller-sharpens-optional)) | |
 | `kw rubric add --rule … --trigger …` | Capture a lesson from a failure (staged) |
-| `kw rubric status` | Show pending candidate rules |
-| `kw rubric review` | Codex audits candidates → proposes a cleaned rubric |
-| `kw rubric promote` | Promote the reviewed rubric to live |
+| `kw rubric status` / `kw rubric review` / `kw rubric promote` | Audit → propose → make live |
 
----
+<details>
+<summary>What a fully-specified principle looks like (one <code>kw add-principle</code> call)</summary>
 
-## Architecture
-
-```
- memory/papers/*.md          ┐
- memory/principles/*.md       ├─ source of truth (git-tracked, human-readable)
- memory/synthesis/*.md        ┘
-        │  kw reindex
-        ▼
- memory/index.json     (diffable catalog projection, committed)
- .kw/index.db          (SQLite query index, gitignored, rebuildable)
-```
-
-- **Markdown is truth.** Indices are derived — delete and rebuild any time.
-- **Atomic writes.** Temp-file rename + `flock` on the index; no torn writes, no pid collisions.
-- **No silent fallback.** Validation errors raise; the engine never writes a placeholder record.
-- **Two-tier by design.** LLM agents reason; a typed Python CLI does the bookkeeping (cheap model reads, strong model abstracts).
-
----
-
-## Under the hood: why the loops converge
-
-For the curious — the mechanism behind "self-evolving," in three steps.
-
-**1 · Distillation is a quotient map.** L2 abstraction maps a concrete method `m` to an equivalence class under *"same problem structure, same mechanism"*:
-
-```
-φ :  concrete method  ──►  ( problem_signature , math_basis , mechanism , rationale )
+```bash
+kw add-principle \
+  --title "Reduce hard dynamics optimization to static coupling + regression onto bridges" \
+  --sig "unpaired marginal snapshots" --sig "continuous-time generative process" \
+  --math "optimal-transport" --math "conditional-flow" \
+  --mechanism "Solve a static coupling, then regress a vector field onto closed-form bridges." \
+  --rationale "The dynamic optimum decomposes into per-pair bridges, so it collapses to a coupling." \
+  --regime "needs paired or OT-coupleable marginals; N large enough to estimate the coupling" \
+  --prediction "straightening the coupling reduces sampling steps without retraining" \
+  --boundaries "fails if the bridge family doesn't match the true conditional process" \
+  --prov "2304.04740 §3.2"
 ```
 
-Two methods from unrelated fields with the *same* structure map to the same class — which is why a microbiome trick and a diffusion-model trick can cluster together. φ collapses **domain distance** and exposes **structural distance**. Transfer is the quotient working as designed.
-
-**2 · The known set induces its own objective.** Over the current principle set `P`, synthesis defines a coverage map; a **gap** is an under-populated region. The gap is *computed from `P`* — an endogenous target, not an external prompt.
-
-**3 · The loop is closed and monotone.**
-
-```
- P_n  ──synthesize──►  gaps(P_n)  ──acquire + distill──►  P_{n+1} = P_n ⊕ new principles
-```
-
-`⊕` is a dedup-and-link merge: a new principle either extends `P` or attaches to an existing one. The graph only accumulates, so re-synthesizing over a richer `P_{n+1}` yields sharper gaps. That feedback — knowledge state → next objective → richer state — is the "self" in self-evolving. In spirit it is **active learning over a design space**.
-
-> **Honest scope.** kw-engine is a tool and a method, not a benchmarked research claim. It does not yet prove structure-indexed retrieval beats RAG on a downstream task — that needs a controlled evaluation. What it gives you today is a disciplined, reproducible substrate for building and querying a transferable-methodology library, with reasoning cleanly separated from deterministic storage.
+When you talk to Claude, it fills all of this in for you from the paper.
+</details>
 
 ---
 
