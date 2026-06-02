@@ -70,6 +70,17 @@ For EACH new paper (process all at once — no per-paper command):
 2. `Agent({ subagent_type: "kw-distiller", model: "opus", prompt: "id=<id>" })` → L2.
 Then `Agent({ subagent_type: "kw-verifier", model: "sonnet", prompt: "scope=all" })`.
 Report: papers absorbed, principles created, any verifier FAILs (surface them — do not hide).
+
+**Rubric self-improvement (capture step).** For each verifier FAIL or quality issue you
+observe this batch (an abstraction leaking domain nouns, a weak rationale, a missed dedup),
+generalize it into ONE reusable rule and capture it:
+```
+kw rubric add --rule "<the general rule>" --trigger "<the specific failure, e.g. P-0047 leaked 'Lactobacillus'>"
+```
+This stages the lesson — it does NOT touch the live rubric. When candidates accumulate,
+run `kw rubric review` (Codex audits consistency, proposes a cleaned rubric) then, after
+you read the proposal, `kw rubric promote`. This is the validation gate that prevents drift.
+
 **Then present the post-absorb choice:** "(a) 现在跑 L3 综合  (b) 先抽查某篇  (c) 继续投喂更多".
 If a PDF fails to parse, report it loudly and continue with the rest.
 

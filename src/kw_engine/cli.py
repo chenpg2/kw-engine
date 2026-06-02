@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import typer
@@ -17,6 +18,10 @@ from kw_engine.verify import run_checks
 app = typer.Typer(no_args_is_help=True)
 kb_app = typer.Typer(help="Manage named knowledge bases (global registry)")
 app.add_typer(kb_app, name="kb")
+rubric_app = typer.Typer(
+    help="Self-improve the distillation rubric (capture failures, gate, promote)"
+)
+app.add_typer(rubric_app, name="rubric")
 
 _REGISTRY_PATH = Path.home() / ".kw" / "registry.yaml"
 
@@ -391,6 +396,112 @@ def cmd_add_link(
     mem = _resolve_memory_dir(memory_dir)
     add_link(mem, from_pid, to_pid, link_type)
     typer.echo(f"OK: {from_pid} --{link_type}--> {to_pid}")
+
+
+@rubric_app.command("add")
+def rubric_add(
+    rule: str = typer.Option(..., "--rule", help="The candidate rule (a lesson from a failure)"),
+    trigger: str = typer.Option("", "--trigger", help="What failure triggered this rule"),
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Capture a candidate rubric rule from a distillation failure."""
+    from kw_engine.rubric import add_candidate
+
+    mem = _resolve_memory_dir(memory_dir)
+    process_dir = mem.parent / "process"
+    process_dir.mkdir(exist_ok=True)
+    add_candidate(process_dir, rule=rule, trigger=trigger)
+    typer.echo("Candidate rule added. Run 'kw rubric review' when ready to audit.")
+
+
+@rubric_app.command("status")
+def rubric_status(
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Show how many candidate rules are awaiting review."""
+    from kw_engine.rubric import count_candidates
+
+    mem = _resolve_memory_dir(memory_dir)
+    process_dir = mem.parent / "process"
+    n = count_candidates(process_dir)
+    typer.echo(f"Pending candidate rules: {n}")
+    if n:
+        typer.echo("Run 'kw rubric review' to audit + propose a cleaned rubric.")
+
+
+@rubric_app.command("review")
+def rubric_review(
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Audit candidates against the live rubric (Codex gate), write a proposed rubric."""
+    import subprocess
+
+    from kw_engine.rubric import assemble_review_bundle, count_candidates
+
+    mem = _resolve_memory_dir(memory_dir)
+    process_dir = mem.parent / "process"
+    if count_candidates(process_dir) == 0:
+        typer.echo("No candidate rules to review.")
+        raise typer.Exit(0)
+
+    bundle = assemble_review_bundle(process_dir)
+    bundle_path = process_dir / "distill-rubric.review-bundle.txt"
+    bundle_path.write_text(bundle, encoding="utf-8")
+    proposed_path = process_dir / "distill-rubric.proposed.md"
+
+    if shutil.which("codex") is None:
+        typer.echo("codex CLI not found. Review bundle written to:")
+        typer.echo(f"  {bundle_path}")
+        typer.echo("Run your reviewer on it, save the revised rubric to:")
+        typer.echo(f"  {proposed_path}")
+        typer.echo("Then run 'kw rubric promote'.")
+        return
+
+    typer.echo("Running Codex audit (validation gate)...")
+    # Point Codex at the bundle FILE (small argv) rather than inlining the whole
+    # bundle as an argument — avoids OS argv-size limits on large rubrics.
+    codex_prompt = (
+        f"Read the file {bundle_path} and follow the instructions inside it. "
+        "Output ONLY the full revised rubric markdown, nothing else."
+    )
+    try:
+        result = subprocess.run(
+            ["codex", "exec", codex_prompt],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except (subprocess.TimeoutExpired, OSError) as e:
+        typer.echo(f"Codex invocation failed: {e}", err=True)
+        typer.echo(f"Review bundle at {bundle_path}; produce {proposed_path} manually.")
+        raise typer.Exit(1) from e
+
+    output = result.stdout.strip()
+    if not output:
+        typer.echo("Codex returned no output. Review manually:", err=True)
+        typer.echo(f"  bundle: {bundle_path}")
+        raise typer.Exit(1)
+
+    proposed_path.write_text(output + "\n", encoding="utf-8")
+    typer.echo(f"Proposed rubric written to {proposed_path}")
+    typer.echo("Review it, then run 'kw rubric promote' to make it live.")
+
+
+@rubric_app.command("promote")
+def rubric_promote(
+    memory_dir: Path = typer.Option(None, help="Path to memory/ directory"),
+) -> None:
+    """Promote the proposed rubric to live (archives old, clears candidates)."""
+    from kw_engine.rubric import promote
+
+    mem = _resolve_memory_dir(memory_dir)
+    process_dir = mem.parent / "process"
+    try:
+        promote(process_dir)
+    except FileNotFoundError as e:
+        typer.echo(f"ERROR: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo("Rubric promoted. Old version archived, candidates cleared.")
 
 
 if __name__ == "__main__":
