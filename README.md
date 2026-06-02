@@ -163,6 +163,22 @@ Every distillation failure (an abstraction that leaked a domain noun, a weak rat
 
 The manual `review` + `promote` are the **validation gate**: they stop the rubric from drifting, bloating, or accumulating contradictions. A bad rule never silently reaches the live rubric. (Want a `--auto` promote when Codex certifies a pure-addition? That's a planned opt-in; the safe default stays manual.)
 
+#### No command line? Just ask Claude
+
+With the plugin installed you never type a `kw` command — you drive Loop 2 in plain language and Claude runs the tools:
+
+1. **While you read papers**, Claude captures distillation lessons on its own. You do nothing.
+2. **When you want to apply them**, say:
+   > *"Review the distiller rubric and show me what would change."*
+
+   Claude runs the audit and summarizes the proposed changes in plain language.
+3. **To make it live**, say:
+   > *"Looks good, apply it."*
+
+   Claude promotes it. It always shows you the proposal and asks first — the live rubric never changes silently.
+
+That's all of Loop 2 without a terminal: read papers as usual, then occasionally say *"review the rubric"* and *"apply it."*
+
 ---
 
 ## CLI reference

@@ -95,5 +95,15 @@ Dispatch `kw-verifier` for the chosen scope; report verdicts.
 ## Action: gaps
 Read `memory/synthesis/gaps.md` and summarize (note: filling gaps = active expansion, Plan 4, default off).
 
+## Action: rubric (optional — improve the distiller)
+Trigger when the user says things like "improve the distiller", "review the rubric",
+"apply what you've learned", "蒸馏质量改进一下", "审一下规则". Steps:
+1. `kw rubric status`. If 0 pending candidates, tell the user there's nothing to review and STOP.
+2. `kw rubric review` — runs the Codex audit, writes `process/distill-rubric.proposed.md`.
+3. Read both `process/distill-rubric.md` (live) and `process/distill-rubric.proposed.md`,
+   and show the user a plain-language summary of what would change (added/merged/removed rules).
+4. Ask for explicit approval. On yes → `kw rubric promote`. On no → leave it staged, change nothing.
+**Never run `kw rubric promote` without explicit user approval** — that is the validation gate.
+
 Reproducibility: after any action, append a one-line run record (action, ids touched,
 subagents+models, date) to `.kw/logs/runs.log`.
