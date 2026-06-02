@@ -71,9 +71,11 @@ For EACH new paper (process all at once — no per-paper command):
 Then `Agent({ subagent_type: "kw-verifier", model: "sonnet", prompt: "scope=all" })`.
 Report: papers absorbed, principles created, any verifier FAILs (surface them — do not hide).
 
-**Rubric self-improvement (capture step).** For each verifier FAIL or quality issue you
-observe this batch (an abstraction leaking domain nouns, a weak rationale, a missed dedup),
-generalize it into ONE reusable rule and capture it:
+**Rubric self-improvement (capture step — OPTIONAL).** This whole step is opt-in; the engine
+works fine without it. Skip it unless the user wants the distiller to improve over time. If
+enabled: for each verifier FAIL or quality issue you observe this batch (an abstraction
+leaking domain nouns, a weak rationale, a missed dedup), generalize it into ONE reusable
+rule and capture it:
 ```
 kw rubric add --rule "<the general rule>" --trigger "<the specific failure, e.g. P-0047 leaked 'Lactobacillus'>"
 ```
