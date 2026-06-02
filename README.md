@@ -240,6 +240,20 @@ kw kb add new-topic memory # register it for use from other projects
 | `kw add-principle …` | Allocate `P-####`, write the principle, update index + SQLite |
 | `kw add-link <from> <to> <type>` | Link principles (`generalizes`/`contrasts`/`composes`/…) |
 | `kw search "<query>"` | Retrieve principles by problem-signature / math-basis |
+| **Self-improving rubric** | |
+| `kw rubric add --rule … --trigger …` | Capture a lesson from a distillation failure (staged) |
+| `kw rubric status` | Show pending candidate rules |
+| `kw rubric review` | Codex audits candidates vs. live rubric → proposes a cleaned rubric |
+| `kw rubric promote` | Promote the reviewed rubric to live (archives old, clears candidates) |
+
+## Two ways it self-improves
+
+The knowledge **grows** and the distiller **sharpens** — two distinct loops.
+
+1. **Knowledge expansion** (outer loop, above): synthesis surfaces gaps → you read to fill them → the design space sharpens.
+2. **Rubric refinement** (inner loop): every distillation failure (an abstraction leaking a domain noun, a weak rationale) becomes a candidate rule via `kw rubric add`. A Codex audit (`kw rubric review`) checks the candidates against the live rubric for consistency before anything is promoted — the **validation gate** that keeps the rubric from drifting or bloating. The live rubric is never edited without an explicit `kw rubric promote`.
+
+This is the cheap core of [SkillOpt](https://github.com/microsoft/SkillOpt)-style "let failures edit the skill," minus the expensive training harness — because kw-engine already generates the failure signals for free.
 
 ## Architecture
 

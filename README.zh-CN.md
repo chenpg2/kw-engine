@@ -240,6 +240,20 @@ kw kb add new-topic memory # 注册，以便其他项目使用
 | `kw add-principle …` | 分配 `P-####`，写入原则，更新 index + SQLite |
 | `kw add-link <from> <to> <type>` | 建立原则间的链接（`generalizes`/`contrasts`/`composes`/…） |
 | `kw search "<query>"` | 按 problem-signature / math-basis 检索原则 |
+| **自我改进的 rubric** | |
+| `kw rubric add --rule … --trigger …` | 把一次蒸馏失败的教训沉淀成候选规则（暂存） |
+| `kw rubric status` | 查看待处理的候选规则数 |
+| `kw rubric review` | Codex 审候选 vs live rubric 的一致性 → 产出清理后的 rubric |
+| `kw rubric promote` | 把审过的 rubric 提升为 live（归档旧版、清空候选） |
+
+## 两种自我改进方式
+
+知识在**扩张**，蒸馏器在**变锐**——两条独立的环。
+
+1. **知识扩张**（外层环，见上）：综合暴露 gap → 你针对性阅读填补 → 设计空间变锐。
+2. **rubric 精炼**（内层环）：每一次蒸馏失败（抽象泄漏了领域名词、rationale 偏弱）通过 `kw rubric add` 变成一条候选规则。Codex 审计（`kw rubric review`）在任何东西被提升前，先检查候选与 live rubric 的一致性——这个**验证门**防止 rubric 漂移或膨胀。不经过显式的 `kw rubric promote`，live rubric 永远不会被改动。
+
+这是 [SkillOpt](https://github.com/microsoft/SkillOpt) 式"让失败编辑 skill"的廉价内核，砍掉了昂贵的训练 harness——因为 kw-engine 本来就免费产生失败信号。
 
 ## 架构
 
