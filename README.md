@@ -6,11 +6,11 @@
 
 **Stop re-reading papers. Start reusing the *why*.**
 
-A methodology evolution engine that distills transferable problem-solving principles from literature — so when you hit a new problem, you search by its *structure* and get back a mechanism that works, plus the reason it works.
+A methodology evolution engine: it distills transferable problem-solving principles from literature, so when you hit a new problem you search by its *structure* and get back a mechanism that works — plus the reason it works and when it breaks.
 
 [![CI](https://github.com/chenpg2/kw-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/chenpg2/kw-engine/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![Tests](https://img.shields.io/badge/tests-41%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-52%20passing-brightgreen)
 ![Types](https://img.shields.io/badge/mypy-strict-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -22,35 +22,37 @@ A methodology evolution engine that distills transferable problem-solving princi
 
 ## The problem
 
-You read a paper, extract a clever trick, and forget it. Six months later you face a problem that the *same trick* would solve — but it was in a different field, used different words, and your notes are a pile of PDFs. Your bottleneck was never finding papers. It was **reusing the underlying method across domains.**
+You read a paper, extract a clever trick, and forget it. Six months later you face a problem the *same trick* would solve — but it was in another field, used different words, and your notes are a pile of PDFs. Your bottleneck was never finding papers. It was **reusing the underlying method across domains.**
 
 kw-engine treats that as the actual problem.
 
 ## What it does
 
-It distills literature through three layers, stripping away the domain and keeping the transferable logic:
+It distills literature through three layers, stripping the domain and keeping the transferable logic:
 
 ```
  Paper PDF
    │
    ├─  L1  faithful extraction   what the paper says, with section locators — no interpretation
    │
-   ├─  L2  abstraction           strip the biology/domain, keep the transferable core:
+   ├─  L2  abstraction           strip the domain, keep the transferable core:
    │                               problem-signature   ·  WHEN it applies (problem structure)
    │                               ↔ mechanism + math  ·  WHAT to do
-   │                               ↔ rationale         ·  WHY the structure↔mechanism mapping holds
+   │                               ↔ rationale         ·  WHY structure ↔ mechanism holds
    │
    └─  L3  synthesis             cluster principles into a design-space map; surface
-                                  contradictions and GAPS — where the knowledge evolves
+                                  contradictions and GAPS — your next reading list
 ```
 
 Then the payoff:
 
 ```
-New problem arrives  →  search by its structure  →  matched mechanism + rationale + when-it-breaks
+New problem  →  search by its structure  →  matched mechanism + rationale + when-it-breaks
 ```
 
-## Why it's different
+It's not a search index over text. It's a compiler from *empirical results* to *reusable problem-solving strategies*. (The math of why this works is at the [end](#under-the-hood-why-the-loops-converge).)
+
+## How it compares
 
 |  | What it retrieves | Indexed by |
 |---|---|---|
@@ -59,165 +61,107 @@ New problem arrives  →  search by its structure  →  matched mechanism + rati
 | **Skill libraries** (e.g. Voyager) | executable task code | task name |
 | **kw-engine** | **mechanism + why-it-works + when-it-fails** | **problem structure** |
 
-It's not a search index over text — it's a compiler from *empirical results* to *reusable problem-solving strategies*.
+---
 
-## Why it self-evolves
+## Get started
 
-Three ingredients let the loop pick its own next move instead of waiting for a human to choose what to read.
-
-**1 · Distillation is a quotient map.** L2 abstraction strips the domain — it maps a concrete method `m` to an equivalence class under *"same problem structure, same mechanism"*:
-
-```
-φ :  concrete method  ──►  ( problem_signature , math_basis , mechanism , rationale )
-```
-
-Two methods from unrelated fields with the *same* structure map to the same class. That's exactly why a microbiome trick and a diffusion-model trick can land in one cluster: φ collapses **domain distance** and exposes **structural distance**. Transfer is the quotient working as designed.
-
-**2 · The known set induces a coverage map — and therefore gaps.** Given the current principle set `P`, L3 synthesis partitions it over a design space whose axes are the recurring structural properties. A **gap** is a region that is under-populated, or where `rationale` / `falsifiable_prediction` is weak. Crucially a gap is *computed from `P` itself* — an endogenous objective, not an external prompt.
-
-**3 · The loop is closed and monotone.**
-
-```
- P_n  ──synthesize──►  gaps(P_n)  ──acquire + distill──►  P_{n+1} = P_n ⊕ new principles
-```
-
-`⊕` is a **dedup-and-link merge**: a new principle either extends `P` or attaches to an existing one as added provenance / `generalizes` / `contrasts`. So the graph only accumulates — it never forgets — and re-synthesizing over a richer `P_{n+1}` yields *sharper* gaps. That feedback (knowledge state → next objective → richer state) is the "self" in self-evolving.
-
-In spirit this is **active learning over a design space**: gaps play the role of coverage/uncertainty sampling, and each round acquires the evidence that most reduces an under-covered region.
-
-## Highlights
-
-- 🧪 **Structure-indexed retrieval** — query by the shape of your problem, not keywords
-- 🧬 **Domain-stripped principles** — a microbiome trick and a diffusion-model trick land in the same cluster when their *math structure* matches
-- 🔁 **Knowledge that evolves** — L3 synthesis surfaces real gaps, which become your next reading list
-- 🪶 **Markdown is the source of truth** — git-diffable, reviewable records; SQLite + JSON are rebuildable indices
-- ⚛️ **Deterministic & atomic** — every mutation is temp-file-rename + file-locked; no half-written state
-- 🤖 **Two-tier by design** — LLM agents do the reasoning; a typed Python CLI does the bookkeeping (cheap model reads, strong model abstracts)
-- 🔌 **Ships as a Claude Code plugin** — `/kw` orchestrates the whole loop; or drive the `kw` CLI yourself
-- ✅ **Production-grade substrate** — 41 tests, `mypy --strict`, `ruff`, CI on Python 3.11–3.13
-
-## Install
+### 1. Install the CLI
 
 ```bash
-# As a CLI tool (recommended — gives you the `kw` command)
-uv tool install git+https://github.com/chenpg2/kw-engine
-
-# Or as a project dependency
-uv add git+https://github.com/chenpg2/kw-engine
-
-# Or clone for development
-git clone https://github.com/chenpg2/kw-engine
-cd kw-engine && uv sync
+uv tool install git+https://github.com/chenpg2/kw-engine   # gives you the `kw` command
 ```
 
-### Install as a Claude Code plugin
+### 2. (Optional) Install the Claude Code plugin
 
-Run these in your terminal (not inside a Claude Code session):
+The plugin adds the reasoning layer — the `/kw` skill and five sub-agents that read, distill, and synthesize for you. Run in your terminal:
 
 ```bash
 claude plugins marketplace add chenpg2/kw-engine
 claude plugins install kw-engine@kw-engine
 ```
 
-This registers the `/kw` and `/kw-init` skills plus the five sub-agents. Then install the CLI substrate they call:
+> The `kw` CLI is the deterministic substrate; the plugin is the LLM reasoning that drives it. For the full experience you want both; the CLI alone works fine for manual use.
+
+### 3. Sixty-second tour
 
 ```bash
-uv tool install git+https://github.com/chenpg2/kw-engine
-```
-
-> The plugin provides the *reasoning* (skills + agents); the `kw` CLI provides the *deterministic substrate*. You want both.
-
-## Quick start
-
-```bash
-# 1. Initialize a workspace in any repo
-kw init
-kw status                                  # 0 papers, 0 principles — empty engine
-
-# 2. Acquire a paper (multi-source open-access fallback + PDF validation)
-kw fetch 2304.04740
-
-# 3. Register and distill (agents fill these after reading; or do it by hand)
+kw init                                    # scaffold a workspace (memory/, .kw/, process/, paper/)
+kw fetch 2304.04740                        # acquire a PDF (open-access fallback chain + validation)
 kw add-paper 2304.04740 --title "Flow Matching for Generative Modeling"
 kw add-principle \
   --title "Reduce hard dynamics optimization to static coupling + regression onto bridges" \
-  --abstract "When a theorem identifies the dynamic optimum as a mixture of simple conditional bridges, replace path optimization with a coupling + closed-form regression." \
   --sig "unpaired marginal snapshots" --sig "continuous-time generative process" \
   --math "optimal-transport" --math "conditional-flow" \
-  --mechanism "Solve a static coupling, then regress a vector field onto closed-form conditional bridges." \
-  --rationale "The dynamic least-action optimum decomposes into per-pair bridges, so the hard part collapses to a coupling problem." \
+  --mechanism "Solve a static coupling, then regress a vector field onto closed-form bridges." \
+  --rationale "The dynamic optimum decomposes into per-pair bridges, so it collapses to a coupling." \
   --regime "needs paired or OT-coupleable marginals; N large enough to estimate the coupling" \
   --prediction "straightening the coupling reduces sampling steps without retraining" \
   --boundaries "fails if the bridge family doesn't match the true conditional process" \
   --prov "2304.04740 §3.2"
 
-# 4. The payoff — search by problem structure
-kw search "optimal transport dynamics"
-
-# 5. Keep it honest
-kw verify                                  # checks provenance, links, required fields
-
-# Optional: browse and maintain the library in a terminal UI
-kw ui
+kw search "optimal transport dynamics"     # ← the payoff: retrieve by problem structure
+kw verify                                  # check integrity (provenance, links, required fields)
+kw ui                                      # optional: browse/search/verify in a terminal UI
 ```
 
-### Or let Claude Code drive it
+### Let Claude Code drive it
 
-Installed as a plugin, just run the skill — it orchestrates fetch → read → distill → synthesize → verify across sub-agents, with the right model on each step:
+With the plugin installed, you never hand-edit a record — the skill orchestrates the whole loop, using the cheap model to read and the strong model to abstract:
 
 ```
-/kw          # detects state, offers a menu, runs the loop — you never hand-edit a file
+/kw          # detects state, offers a menu, runs fetch → read → distill → synthesize → verify
 /kw-init     # scaffold a workspace from natural language
 ```
 
-## Multiple knowledge bases
+---
 
-You can maintain separate knowledge bases for different research topics and switch between them from any project.
+## Knowledge bases: one library, many projects
+
+A knowledge base lives in one place; any project links to it by name. No copies.
 
 ```bash
-# Register named knowledge bases (once, stored globally in ~/.kw/registry.yaml)
-kw kb add microbiome   ~/research/microbiome-kb/memory
-kw kb add causal       ~/research/causal-inference-kb/memory
-kw kb add dynamics     ~/research/dynamics-kb/memory
-
-# See what's registered
+# Register topic-specific libraries once (stored in ~/.kw/registry.yaml)
+kw kb add microbiome  ~/research/microbiome-kb/memory
+kw kb add causal      ~/research/causal-inference-kb/memory
 kw kb list
-#   causal       /Users/you/research/causal-inference-kb/memory   [ok]
-#   dynamics     /Users/you/research/dynamics-kb/memory            [ok]
-#   microbiome   /Users/you/research/microbiome-kb/memory          [ok]
-```
 
-### Use from any project
-
-```bash
-# In any project directory, link to a knowledge base by name
+# In any project, link by name — every kw command now uses that library
 cd ~/my-project
 kw link microbiome
-
-# Now all kw commands use the microbiome knowledge base — no local copy needed
 kw search "simplex dynamics"
-kw status
-kw verify
 
-# Switch to a different knowledge base
+# Switch topics anytime
 kw link causal
 kw search "intervention identifiability"
 ```
 
-`kw link` creates a lightweight `.kw/config.yaml` that points to the shared library. No files are copied. Multiple projects can share the same knowledge base simultaneously.
+`kw link` writes a small `.kw/config.yaml` pointing at the shared library. Multiple projects can share one knowledge base at the same time.
 
-You can also link by path instead of name:
-```bash
-kw link ~/Downloads/soft/knowledge_wiki/memory
-```
+---
 
-### Create a new knowledge base from scratch
+## How it improves itself
 
-```bash
-mkdir ~/research/new-topic-kb && cd ~/research/new-topic-kb
-kw init                    # scaffolds memory/, .kw/, process/, paper/
-kw kb add new-topic memory # register it for use from other projects
-```
+Two independent loops run as you use it: the **knowledge grows**, and the **distiller sharpens**.
+
+### Loop 1 — the knowledge grows (gap-driven)
+
+`L3 synthesis` clusters what you know into a design-space map and computes **gaps** — problem structures with no good mechanism yet. Gaps become your next reading list. Each new paper is deduped and linked into the graph, so re-synthesizing yields *sharper* gaps. The objective (what to read next) is generated by the current state, not handed in from outside.
+
+### Loop 2 — the distiller sharpens (semi-automatic)
+
+Every distillation failure (an abstraction that leaked a domain noun, a weak rationale, a missed dedup) can become a rule that improves the rubric the distiller follows. This is the cheap core of [SkillOpt](https://github.com/microsoft/SkillOpt)-style "let failures edit the skill," without the training harness — because the failure signals are already produced for free by the verifier.
+
+**It is deliberately not fully automatic.** Capturing a lesson is cheap and safe; changing the live rubric is gated by review:
+
+| Step | Command | Who runs it | Why |
+|---|---|---|---|
+| **Capture** | `kw rubric add` | the `/kw` agent, during a batch | turn a specific failure into a general rule (staged, does **not** touch the live rubric) |
+| **Review** | `kw rubric review` | **you** | Codex audits the staged rules against the live rubric for consistency, proposes a cleaned version |
+| **Promote** | `kw rubric promote` | **you**, after reading the proposal | swap the reviewed rubric in; archives the old one, clears the queue |
+
+The manual `review` + `promote` are the **validation gate**: they stop the rubric from drifting, bloating, or accumulating contradictions. A bad rule never silently reaches the live rubric. (Want a `--auto` promote when Codex certifies a pure-addition? That's a planned opt-in; the safe default stays manual.)
+
+---
 
 ## CLI reference
 
@@ -225,35 +169,27 @@ kw kb add new-topic memory # register it for use from other projects
 |---|---|
 | **Knowledge bases** | |
 | `kw kb add <name> <path>` | Register a named knowledge base |
-| `kw kb list` | Show all registered knowledge bases |
-| `kw kb remove <name>` | Unregister a knowledge base (files untouched) |
-| `kw link <name-or-path>` | Link current project to a knowledge base |
+| `kw kb list` / `kw kb remove <name>` | List / unregister (files untouched) |
+| `kw link <name-or-path>` | Link the current project to a knowledge base |
 | **Workspace** | |
-| `kw init [dir]` | Scaffold a new workspace from scratch |
+| `kw init [dir]` | Scaffold a new workspace |
 | `kw status` | Counts, pending papers, synthesis staleness |
-| `kw ui` | Open a terminal UI for browsing, searching, verifying, and reindexing |
+| `kw ui` | Terminal UI to browse, search, verify, reindex |
 | `kw reindex` | Rebuild `index.json` + SQLite from markdown |
-| `kw verify` | Check integrity invariants (provenance, links, required fields) |
+| `kw verify` | Check integrity invariants |
 | **Papers & principles** | |
-| `kw fetch <id\|doi\|title>` | Acquire a PDF via OA fallback chain + validate + register |
-| `kw add-paper <id>` | Register a paper (scaffold record + index entry) |
+| `kw fetch <id\|doi\|title>` | Acquire a PDF (OA fallback chain) + validate + register |
+| `kw add-paper <id>` | Register a paper |
 | `kw add-principle …` | Allocate `P-####`, write the principle, update index + SQLite |
 | `kw add-link <from> <to> <type>` | Link principles (`generalizes`/`contrasts`/`composes`/…) |
 | `kw search "<query>"` | Retrieve principles by problem-signature / math-basis |
-| **Self-improving rubric** | |
-| `kw rubric add --rule … --trigger …` | Capture a lesson from a distillation failure (staged) |
+| **Self-improving rubric** (see [Loop 2](#loop-2--the-distiller-sharpens-semi-automatic)) | |
+| `kw rubric add --rule … --trigger …` | Capture a lesson from a failure (staged) |
 | `kw rubric status` | Show pending candidate rules |
-| `kw rubric review` | Codex audits candidates vs. live rubric → proposes a cleaned rubric |
-| `kw rubric promote` | Promote the reviewed rubric to live (archives old, clears candidates) |
+| `kw rubric review` | Codex audits candidates → proposes a cleaned rubric |
+| `kw rubric promote` | Promote the reviewed rubric to live |
 
-## Two ways it self-improves
-
-The knowledge **grows** and the distiller **sharpens** — two distinct loops.
-
-1. **Knowledge expansion** (outer loop, above): synthesis surfaces gaps → you read to fill them → the design space sharpens.
-2. **Rubric refinement** (inner loop): every distillation failure (an abstraction leaking a domain noun, a weak rationale) becomes a candidate rule via `kw rubric add`. A Codex audit (`kw rubric review`) checks the candidates against the live rubric for consistency before anything is promoted — the **validation gate** that keeps the rubric from drifting or bloating. The live rubric is never edited without an explicit `kw rubric promote`.
-
-This is the cheap core of [SkillOpt](https://github.com/microsoft/SkillOpt)-style "let failures edit the skill," minus the expensive training harness — because kw-engine already generates the failure signals for free.
+---
 
 ## Architecture
 
@@ -268,14 +204,43 @@ This is the cheap core of [SkillOpt](https://github.com/microsoft/SkillOpt)-styl
 ```
 
 - **Markdown is truth.** Indices are derived — delete and rebuild any time.
-- **Atomic writes.** Temp-file rename + `flock` on the index; no pid collisions, no torn writes.
+- **Atomic writes.** Temp-file rename + `flock` on the index; no torn writes, no pid collisions.
 - **No silent fallback.** Validation errors raise; the engine never writes a placeholder record.
+- **Two-tier by design.** LLM agents reason; a typed Python CLI does the bookkeeping (cheap model reads, strong model abstracts).
+
+---
+
+## Under the hood: why the loops converge
+
+For the curious — the mechanism behind "self-evolving," in three steps.
+
+**1 · Distillation is a quotient map.** L2 abstraction maps a concrete method `m` to an equivalence class under *"same problem structure, same mechanism"*:
+
+```
+φ :  concrete method  ──►  ( problem_signature , math_basis , mechanism , rationale )
+```
+
+Two methods from unrelated fields with the *same* structure map to the same class — which is why a microbiome trick and a diffusion-model trick can cluster together. φ collapses **domain distance** and exposes **structural distance**. Transfer is the quotient working as designed.
+
+**2 · The known set induces its own objective.** Over the current principle set `P`, synthesis defines a coverage map; a **gap** is an under-populated region. The gap is *computed from `P`* — an endogenous target, not an external prompt.
+
+**3 · The loop is closed and monotone.**
+
+```
+ P_n  ──synthesize──►  gaps(P_n)  ──acquire + distill──►  P_{n+1} = P_n ⊕ new principles
+```
+
+`⊕` is a dedup-and-link merge: a new principle either extends `P` or attaches to an existing one. The graph only accumulates, so re-synthesizing over a richer `P_{n+1}` yields sharper gaps. That feedback — knowledge state → next objective → richer state — is the "self" in self-evolving. In spirit it is **active learning over a design space**.
+
+> **Honest scope.** kw-engine is a tool and a method, not a benchmarked research claim. It does not yet prove structure-indexed retrieval beats RAG on a downstream task — that needs a controlled evaluation. What it gives you today is a disciplined, reproducible substrate for building and querying a transferable-methodology library, with reasoning cleanly separated from deterministic storage.
+
+---
 
 ## Development
 
 ```bash
 uv sync
-uv run pytest -v          # 41 tests
+uv run pytest -v          # 52 tests
 uv run ruff check .       # lint
 uv run mypy src/          # strict type check
 ```
