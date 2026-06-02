@@ -91,11 +91,29 @@ Open Claude Code in any folder and say what you want. Claude uses the engine for
 | *"Process this paper: arxiv 2304.04740"* | fetches the PDF, reads it, distills principles, shows you what it learned |
 | *"What do we know about optimal transport?"* | searches by problem structure → matching mechanisms + why they work |
 | *"What are the gaps in our knowledge?"* | shows under-covered regions — your next reading list |
+| *"Here's my project and some papers — help me push it forward."* | runs the **project-driven loop** (below) |
 | *"Improve the distiller — review the rubric and apply it."* | runs the self-improvement loop (asks before changing anything) |
 
 Prefer a guided menu? Type `/kw` and Claude walks you through fetch → read → distill → synthesize → verify.
 
 > **Like the terminal, or want to script it?** Every action above also has a `kw` command — see the [CLI reference](#cli-reference-for-scripting--automation) at the end. It's optional.
+
+### Drive your own project (the main event)
+
+This is what the engine is *for*. You arrive with a research problem or a half-formed idea and a pile of papers — maybe not enough of them — and want to push the project forward. Say:
+
+> *"I want to design a better X. Here are my papers. Help me work it out."*
+
+Claude runs `/kw-explore`, a problem-driven loop:
+
+1. **Frames the problem** — decomposes your idea into its *structural* axes (and challenges the framing to find the real difficulty), then confirms it with you.
+2. **Absorbs your papers** into principles.
+3. **Maps your problem onto the library** — shows which sub-problems already have a proven mechanism and which are still **gaps** (this is where "not enough papers" surfaces concretely).
+4. **Fills the gaps** — proposes targeted papers to read, fetches and absorbs the ones you pick, re-maps. Repeat until covered.
+5. **Assembles a design** — composes the matched principles into a candidate solution where *every decision cites the principle it rests on*, and flags whatever still has no support.
+6. **Hands off** — writes a living design doc + rationale + next-steps into *your project*, so a fresh session continues seamlessly.
+
+Your design lives in your project; the reusable principles go into the knowledge base. Each future round of reading sharpens the design.
 
 ### Working with multiple topics
 
