@@ -68,6 +68,8 @@ kw-engine 把这件事本身当作要解决的问题。
 
 kw-engine 跑在 **Claude Code** 里。装一次,之后你只管跟 Claude 聊你的论文。
 
+> **完全是新手?** 跟着[零基础手把手教程](docs/TUTORIAL.zh-CN.md)走——它假设你没用过命令行,带你跑完一个完整案例。
+
 ### 安装(一次性)
 
 终端里三行——这是你唯一需要敲的命令:
@@ -79,6 +81,10 @@ claude plugins install kw-engine@kw-engine                   # …驱动引擎�
 ```
 
 之后,一切都在对话里发生。
+
+> **没有 Claude 订阅?用 Kimi 或 DeepSeek。** Claude Code 能接任意 Anthropic 兼容后端。在 `~/.claude/settings.json` 里设两个环境变量指向你的供应商,下面所有操作原样有效:
+> - **Kimi:** `ANTHROPIC_BASE_URL=https://api.moonshot.cn/anthropic`、`ANTHROPIC_AUTH_TOKEN=<你的 Kimi key>`
+> - **DeepSeek:** `ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic`、`ANTHROPIC_AUTH_TOKEN=<你的 DeepSeek key>`(它还自动映射强/弱模型,所以"便宜模型读、强模型蒸馏"的省钱分工依然有效)
 
 ### 然后只管跟 Claude 说
 

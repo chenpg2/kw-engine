@@ -69,6 +69,8 @@ It's not a search index over text. It's a compiler from *empirical results* to *
 
 kw-engine runs inside **Claude Code**. Install it once, then you just talk to Claude about your papers.
 
+> **Brand-new to all this?** Follow the step-by-step [beginner tutorial (中文)](docs/TUTORIAL.zh-CN.md) — it assumes zero terminal experience and walks through a full case.
+
 ### Install (one time)
 
 Three lines in your terminal — the only commands you'll ever need:
@@ -80,6 +82,10 @@ claude plugins install kw-engine@kw-engine                   # …skills + agent
 ```
 
 After this, everything happens in conversation.
+
+> **No Claude subscription? Use Kimi or DeepSeek.** Claude Code can run on any Anthropic-compatible backend. Point it at your provider with two env vars in `~/.claude/settings.json` and everything below works identically:
+> - **Kimi:** `ANTHROPIC_BASE_URL=https://api.moonshot.cn/anthropic`, `ANTHROPIC_AUTH_TOKEN=<your Kimi key>`
+> - **DeepSeek:** `ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic`, `ANTHROPIC_AUTH_TOKEN=<your DeepSeek key>` (it even maps strong/cheap models, so the read-cheap/distill-strong split is preserved)
 
 ### Then just talk to Claude
 
