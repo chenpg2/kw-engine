@@ -69,17 +69,20 @@ It's not a search index over text. It's a compiler from *empirical results* to *
 
 kw-engine runs inside **Claude Code**. Install it once, then you just talk to Claude about your papers.
 
-> **Brand-new to all this?** Follow the step-by-step [beginner tutorial (中文)](docs/TUTORIAL.zh-CN.md) — it assumes zero terminal experience and walks through a full case.
+> **Brand-new to all this?** Follow the step-by-step [beginner tutorial](docs/TUTORIAL.md) — it assumes zero terminal experience and walks through a full case. Also available in [中文](docs/TUTORIAL.zh-CN.md).
 
 ### Install (one time)
 
-Three lines in your terminal — the only commands you'll ever need:
+Four lines in your terminal — the only commands you'll ever need:
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh              # install uv (skip if you have it)
 uv tool install git+https://github.com/chenpg2/kw-engine     # the engine
 claude plugins marketplace add chenpg2/kw-engine             # the Claude Code plugin…
 claude plugins install kw-engine@kw-engine                   # …skills + agents that drive it
 ```
+
+> Windows: replace the first line with `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
 
 After this, everything happens in conversation.
 
