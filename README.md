@@ -97,6 +97,7 @@ Open Claude Code in any folder and say what you want. Claude uses the engine for
 | *"Process this paper: arxiv 2304.04740"* | fetches the PDF, reads it, distills principles, shows you what it learned |
 | *"What do we know about optimal transport?"* | searches by problem structure → matching mechanisms + why they work |
 | *"What are the gaps in our knowledge?"* | shows under-covered regions — your next reading list |
+| *"Is this a good research question? Help me sharpen it."* | runs the **question-sharpening loop** (below) |
 | *"Here's my project and some papers — help me push it forward."* | runs the **project-driven loop** (below) |
 | *"Improve the distiller — review the rubric and apply it."* | runs the self-improvement loop (asks before changing anything) |
 
@@ -104,9 +105,19 @@ Prefer a guided menu? Type `/kw` and Claude walks you through fetch → read →
 
 > **Like the terminal, or want to script it?** Every action above also has a `kw` command — see the [CLI reference](#cli-reference-for-scripting--automation) at the end. It's optional.
 
+### Sharpen the question first (optional, upstream)
+
+Before building a technical route, it's worth asking: *is this even a good question?* Say:
+
+> *"Is this a good research question? Help me sharpen it: <your rough idea>."*
+
+Claude runs `/kw-question` — it pressure-tests your idea against a seven-point bar (stakes, specificity, rival hypotheses, falsifiability, a 2-week pilot, negative-learning value, grounding), rewrites vague topics/gaps into a real testable question, stress-tests it against the strongest reviewer objection, and emits a **Question Card**. Then it asks whether to hand off to the project loop below.
+
+> Method credit: distilled from public research-craft sources (Alon, Platt's strong inference, the Heilmeier Catechism, Hamming, Alvesson & Sandberg) and the [good-question](https://github.com/Rimagination/good-question) project.
+
 ### Drive your own project (the main event)
 
-This is what the engine is *for*. You arrive with a research problem or a half-formed idea and a pile of papers — maybe not enough of them — and want to push the project forward. Say:
+This is what the engine is *for*. You arrive with a research problem or a half-formed idea (ideally already sharpened above) and a pile of papers — maybe not enough of them — and want to push the project forward. Say:
 
 > *"I want to design a better X. Here are my papers. Help me work it out."*
 

@@ -30,6 +30,12 @@ Prerequisite: the project must be linked to a knowledge base. If `kw status` err
 
 A good decomposition is most of the value. Do not skip to fetching papers.
 
+**If a Question Card already exists** (`<project>/problems/<slug>/QUESTION.md`, produced by
+`/kw-question`): the question's *worth* is already validated — do NOT re-litigate stakes/
+falsifiability. Read the card and go straight to extracting the structural signature (below).
+If the user only has a vague idea and no card, and it's unclear whether the question is even
+worth pursuing, suggest running `/kw-question` first.
+
 1. Interview the user just enough to extract a **problem signature**: the *structural* axes of
    their problem, pushed toward the form the library indexes by — structural properties, not
    domain narrative. (E.g. not "vaginal microbiome typing" but "compositional/simplex-constrained
