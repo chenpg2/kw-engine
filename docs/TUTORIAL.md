@@ -149,7 +149,26 @@ Feed more papers by repeating this step with different links. Not enough papers?
 
 **What happens:** Claude searches by problem structure and lists matching mechanisms + why they work — not a wall of raw text.
 
-### Step 4 (the main event): Push your own project forward
+### Step 4: Sharpen your research question (optional but recommended)
+
+Before diving into a technical design, it's worth checking: *is this even a good question?*
+
+> **You say:** Is this a good research question? I think community state types (CSTs) for vaginal microbiome classification are outdated — the taxonomy resolution is too low and the discrete types miss the continuous spectrum. Help me sharpen this.
+
+**What happens:** Claude runs a **question-sharpening loop** that:
+1. Pressure-tests your idea against seven criteria (Does it matter? Is it specific enough? Are there rival hypotheses? Can it be falsified? Can you pilot it in 2 weeks? Does a negative result still teach something? Is it grounded in evidence?);
+2. Rewrites vague ideas into a real testable question;
+3. Plays the **harshest reviewer** and hits you with the strongest objection;
+4. Produces a **Question Card** — a one-page summary of the question, stakes, competing hypotheses, falsification conditions, and best next action.
+
+Then Claude asks: *"The question is sharpened. Want to use /kw-explore to build a technical route? Or stop at this card?"*
+
+- Say **yes** → continues to Step 5 below.
+- Say **no** → keep the card for a proposal draft or lab discussion.
+
+> You can skip this step and go straight to Step 5 if you already have a clear, well-formed question.
+
+### Step 5 (the main event): Push your own project forward
 
 > **You say:** I want to design a generative model for compositional data (sums to 1). Here are some papers I have. Help me figure out how to approach this.
 
@@ -161,7 +180,7 @@ Feed more papers by repeating this step with different links. Not enough papers?
 5. Assembling a **draft design** where every decision cites the principle it rests on, with unsupported parts flagged;
 6. Writing the design, rationale, and next steps **into your project folder** so you can pick up where you left off.
 
-### Step 5: Keep iterating
+### Step 6: Keep iterating
 
 > **You say:** Fill in gap #3 and update the design.
 
