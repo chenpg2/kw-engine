@@ -1,7 +1,11 @@
 # Build KWEngine.exe on GitHub Actions (windows-latest).
-# Artifact "KWEngine-windows" appears on each run's page; also attaches to v* tag releases.
+# - Every push touching winapp/** uploads the exe as a run artifact ("KWEngine-windows").
+# - Publishing a GitHub Release attaches KWEngine.exe to it automatically.
 
 name: Build Windows exe
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 on:
   push:
@@ -9,12 +13,15 @@ on:
     paths:
       - "winapp/**"
       - ".github/workflows/build-windows.yml"
-    tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch: {}
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -45,8 +52,8 @@ jobs:
           name: KWEngine-windows
           path: winapp/dist/KWEngine.exe
 
-      - name: Attach to release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach to release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: winapp/dist/KWEngine.exe

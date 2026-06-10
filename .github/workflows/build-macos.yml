@@ -1,0 +1,66 @@
+# Build KWEngine.app + DMG on GitHub Actions (macos-latest, Xcode 16+).
+# - Every push touching macapp/** uploads the DMG as a run artifact ("KWEngine-macos").
+# - Publishing a GitHub Release attaches the DMG to it automatically.
+# Note: ad-hoc signed — recipients right-click → Open on first launch.
+
+name: Build macOS dmg
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "macapp/**"
+      - ".github/workflows/build-macos.yml"
+  release:
+    types: [published]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 16+
+        run: |
+          latest=$(ls -d /Applications/Xcode_16* /Applications/Xcode_17* 2>/dev/null | sort -V | tail -1 || true)
+          if [ -n "$latest" ]; then sudo xcode-select -s "$latest"; fi
+          xcodebuild -version
+
+      - name: Build Release
+        working-directory: macapp
+        run: |
+          xcodebuild -project KWEngine.xcodeproj \
+            -target KWEngine \
+            -configuration Release \
+            SYMROOT="$PWD/build" \
+            OBJROOT="$PWD/build" \
+            CODE_SIGN_IDENTITY="-" \
+            build
+
+      - name: Package DMG
+        working-directory: macapp
+        run: |
+          test -d build/Release/KWEngine.app
+          STAGING=$(mktemp -d)
+          cp -R build/Release/KWEngine.app "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+          hdiutil create -volname "KWEngine" -srcfolder "$STAGING" -ov -format UDZO KWEngine-1.0.dmg
+          ls -la KWEngine-1.0.dmg
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KWEngine-macos
+          path: macapp/KWEngine-1.0.dmg
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: macapp/KWEngine-1.0.dmg

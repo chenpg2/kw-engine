@@ -1,19 +1,26 @@
-# GitHub Actions 模板：自动构建 KWEngine.exe
-# 启用方法：把本文件复制到仓库的 .github/workflows/build-windows.yml，push 即触发。
-# 构建产物在 Actions 页面的 Artifacts 中下载（KWEngine-windows.zip）。
+# 模板备份 — 实际生效的工作流在仓库根部 .github/workflows/build-windows.yml
+# （此副本仅供单独取用 winapp/ 时参考，两边内容保持一致。）
 
 name: Build Windows exe
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   push:
+    branches: [main]
     paths:
       - "winapp/**"
       - ".github/workflows/build-windows.yml"
+  release:
+    types: [published]
   workflow_dispatch: {}
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -32,8 +39,20 @@ jobs:
         working-directory: winapp
         run: pyinstaller kwengine.spec --noconfirm
 
+      - name: Smoke check
+        working-directory: winapp
+        run: |
+          if (!(Test-Path dist/KWEngine.exe)) { exit 1 }
+          Get-Item dist/KWEngine.exe | Select-Object Name, Length
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: KWEngine-windows
           path: winapp/dist/KWEngine.exe
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: winapp/dist/KWEngine.exe
