@@ -1,0 +1,52 @@
+# Build KWEngine.exe on GitHub Actions (windows-latest).
+# Artifact "KWEngine-windows" appears on each run's page; also attaches to v* tag releases.
+
+name: Build Windows exe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "winapp/**"
+      - ".github/workflows/build-windows.yml"
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: winapp
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pyinstaller
+
+      - name: Build exe
+        working-directory: winapp
+        run: pyinstaller kwengine.spec --noconfirm
+
+      - name: Smoke check
+        working-directory: winapp
+        run: |
+          if (!(Test-Path dist/KWEngine.exe)) { exit 1 }
+          Get-Item dist/KWEngine.exe | Select-Object Name, Length
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KWEngine-windows
+          path: winapp/dist/KWEngine.exe
+
+      - name: Attach to release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: winapp/dist/KWEngine.exe
