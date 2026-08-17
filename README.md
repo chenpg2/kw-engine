@@ -1,3 +1,5 @@
+
+
 <div align="center">
 
 <img src="banner.png" alt="kw-engine banner" width="100%">
@@ -86,7 +88,7 @@ claude plugins install kw-engine@kw-engine                   # …skills + agent
 
 After this, everything happens in conversation.
 
-> **No Claude subscription? Use Kimi or DeepSeek.** Claude Code can run on any Anthropic-compatible backend. Point it at your provider with two env vars in `~/.claude/settings.json` and everything below works identically:
+> **No Claude subscription? Use Kimi or DeepSeek.** Claude Code can run on any Anthropic-compatible backend. Point it at your provider with two env vars in the `env` block of `~/.claude/settings.json` and everything below works identically:
 > - **Kimi:** `ANTHROPIC_BASE_URL=https://api.moonshot.cn/anthropic`, `ANTHROPIC_AUTH_TOKEN=<your Kimi key>`
 > - **DeepSeek:** `ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic`, `ANTHROPIC_AUTH_TOKEN=<your DeepSeek key>` (it even maps strong/cheap models, so the read-cheap/distill-strong split is preserved)
 
